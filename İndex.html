@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
@@ -56,6 +57,7 @@ canvas{width:100%!important;height:150px!important;display:block;}
 .pnl-bar.up{background:var(--green-bg);border-color:var(--green-bd);color:var(--green);}
 .pnl-bar.dn{background:var(--red-bg);border-color:var(--red-bd);color:var(--red);}
 .pnl-bar.zero{background:var(--bg);border-color:var(--border);color:var(--sub);}
+/* GENEL KAR/ZARAR */
 .grand-pnl{margin:0 16px 13px;padding:11px 14px;border-radius:12px;border:1.5px solid;display:flex;justify-content:space-between;align-items:center;}
 .grand-pnl.up{background:var(--green-bg);border-color:var(--green-bd);}
 .grand-pnl.dn{background:var(--red-bg);border-color:var(--red-bd);}
@@ -68,7 +70,7 @@ canvas{width:100%!important;height:150px!important;display:block;}
 .total-coin{display:flex;align-items:center;gap:7px;}
 .t-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
 .t-lbl{font-size:.8rem;color:var(--sub);}.t-val{font-family:var(--mono);font-size:.8rem;}
-.grand-box{margin:0 16px 6px;padding:11px;border-radius:12px;background:var(--accent-bg);border:1.5px solid var(--accent-bd);display:flex;justify-content:space-between;align-items:center;}
+.grand-box{margin:0 16px 13px;padding:11px;border-radius:12px;background:var(--accent-bg);border:1.5px solid var(--accent-bd);display:flex;justify-content:space-between;align-items:center;}
 .grand-lbl{font-size:.8rem;font-weight:600;color:var(--accent);}.grand-val{font-family:var(--mono);font-size:.95rem;font-weight:500;color:var(--accent);}
 .ctrl-wrap{padding:12px 16px 13px;}
 .params-line{font-family:var(--mono);font-size:.68rem;color:var(--sub);margin-bottom:8px;text-align:center;}
@@ -92,6 +94,7 @@ canvas{width:100%!important;height:150px!important;display:block;}
 .t-price2{font-family:var(--mono);font-size:.72rem;}
 .t-pnl2{font-family:var(--mono);font-size:.73rem;font-weight:600;}
 .empty-msg{text-align:center;color:var(--sub);font-size:.78rem;padding:16px;font-family:var(--mono);}
+/* DRAWER */
 .drw-overlay{position:fixed;inset:0;background:rgba(0,0,0,.32);z-index:70;opacity:0;pointer-events:none;transition:opacity .3s;}
 .drw-overlay.open{opacity:1;pointer-events:all;}
 .drawer{position:fixed;bottom:0;left:0;right:0;max-width:480px;margin:0 auto;background:var(--card);border-radius:22px 22px 0 0;z-index:71;transform:translateY(100%);transition:transform .35s cubic-bezier(.32,.72,0,1);max-height:92vh;display:flex;flex-direction:column;}
@@ -144,6 +147,20 @@ canvas{width:100%!important;height:150px!important;display:block;}
 @keyframes fR{0%{background:#fee2e2}100%{background:var(--card)}}
 .fg{animation:fG .6s ease;}.fr{animation:fR .6s ease;}
 .tu{color:var(--green)!important;}.td{color:var(--red)!important;}
+/* FİYAT ALARMI */
+.alert-box{padding:10px 16px 14px;}
+.alert-row{display:flex;align-items:center;gap:9px;padding:8px 0;border-bottom:1px solid var(--border);}
+.alert-row:last-child{border:none;}
+.alert-chk{width:18px;height:18px;border-radius:5px;border:1.5px solid var(--border);background:var(--bg);cursor:pointer;flex-shrink:0;accent-color:var(--accent);}
+.alert-lbl{font-size:.8rem;color:var(--sub);flex:1;line-height:1.3;}
+.alert-lbl strong{display:block;font-size:.78rem;color:var(--text);}
+.alert-inp{font-family:var(--mono);font-size:.85rem;width:100px;padding:7px 10px;border-radius:9px;border:1.5px solid var(--border);background:var(--bg);text-align:right;outline:none;color:var(--text);}
+.alert-inp:focus{border-color:var(--accent);}
+.alert-triggered{background:var(--yellow-bg);border:1.5px solid var(--yellow-bd);border-radius:12px;padding:9px 13px;margin:0 16px 12px;font-size:.78rem;color:var(--yellow);font-family:var(--mono);display:none;text-align:center;}
+.alert-triggered.show{display:block;}
+/* BİLDİRİM TOAST */
+.toast{position:fixed;top:70px;left:50%;transform:translateX(-50%);background:#1a1f2e;color:#fff;padding:10px 20px;border-radius:12px;font-family:var(--mono);font-size:.8rem;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap;}
+.toast.show{opacity:1;}
 </style>
 </head>
 <body>
@@ -196,6 +213,25 @@ canvas{width:100%!important;height:150px!important;display:block;}
     </div>
   </div>
 
+  <!-- FİYAT ALARMI KARTI -->
+
+  <div class="card">
+    <div class="card-lbl" id="alert-title">BTC Fiyat Alarmı</div>
+    <div id="alert-triggered" class="alert-triggered">⚠️ Fiyat hedefine ulaşıldı — Bot durduruldu!</div>
+    <div class="alert-box">
+      <div class="alert-row">
+        <input type="checkbox" class="alert-chk" id="alert-up-chk">
+        <div class="alert-lbl"><strong>Gelince dursun</strong>Bu fiyata ulaşınca bot durur</div>
+        <input class="alert-inp" id="alert-up-val" type="number" placeholder="örn: 95000" min="0">
+      </div>
+      <div class="alert-row">
+        <input type="checkbox" class="alert-chk" id="alert-dn-chk">
+        <div class="alert-lbl"><strong>Düşünce dursun</strong>Bu fiyatın altına düşünce bot durur</div>
+        <input class="alert-inp" id="alert-dn-val" type="number" placeholder="örn: 80000" min="0">
+      </div>
+    </div>
+  </div>
+
   <div class="card"><div class="ctrl-wrap"><div class="params-line" id="params-line">RSI AL≤35 / SAT≥65 · TP +5% · SL −3% · İşlem %20</div><div class="ctrl-row"><button class="btn btn-start" id="btn-start" onclick="startBot()" disabled>▶ Başlat</button><button class="btn btn-stop" id="btn-stop" onclick="stopBot()" disabled>■ Durdur</button><button class="btn btn-reset" onclick="resetCoin()">↺</button></div></div></div>
 
   <div class="card" style="padding-top:2px">
@@ -210,12 +246,21 @@ canvas{width:100%!important;height:150px!important;display:block;}
   </div>
 </div>
 
+<div class="toast" id="toast"></div>
+
 <script>
+// ─── BİNANCE'DAKİ TÜM USDT COİNLERİ (dinamik yükleme) ──────────────────────
 let ALL_COINS = [];
-let binanceSymbols = [];
-const DEFAULT_COINS = ['BTC','ETH','BNB','SOL','AVAX','XRP','DOGE','ADA','DOT','LINK','MATIC','LTC','UNI','ATOM','FIL','NEAR','APT','OP','ARB','SUI','PEPE','WIF','BONK','FLOKI','TRX','TON','SHIB','SAND','MANA','AXS'];
-const COIN_COLORS = ['#f59e0b','#6366f1','#eab308','#8b5cf6','#ef4444','#0ea5e9','#d97706','#0d9488','#e879f9','#2563eb','#7c3aed','#6b7280','#ff007a','#6f42c1','#0090ff','#00c08b','#00b4d8','#ff0420','#213147','#4da2ff','#ff69b4','#ff8c00','#ff6347','#9370db','#e74c3c','#3498db','#95a5a6','#f1c40f','#9b59b6','#27ae60'];
+let binanceSymbols = []; // Binance'dan gelen tüm semboller
+
+// Varsayılan coinler (başlangıç)
+const DEFAULT_COINS = ['BTC','ETH','BNB','SOL','AVAX','XRP','DOGE','ADA','DOT','LINK','MATIC','LTC','UNI','ATOM','FIL','NEAR','APT','OP','ARB','SUI','PEPE','WIF','BONK','FLOKI','TRX','TON','SHIB','SAND','MANA','AXS','ENJ','CHZ','ZIL','HBAR','VET','ALGO','XLM','EOS','XTZ','THETA','FTM','ONE','IOTA','ZEC','DASH','WAVES','ICX','QTUM','ONT'];
+const COIN_COLORS = ['#f59e0b','#6366f1','#eab308','#8b5cf6','#ef4444','#0ea5e9','#d97706','#0d9488','#e879f9','#2563eb','#7c3aed','#6b7280','#ff007a','#6f42c1','#0090ff','#00c08b','#00b4d8','#ff0420','#213147','#4da2ff','#ff69b4','#ff8c00','#ff6347','#9370db','#e74c3c','#3498db','#95a5a6','#f1c40f','#9b59b6','#27ae60','#16a085','#2980b9','#c0392b','#8e44ad','#1abc9c','#d35400','#7f8c8d','#34495e','#e67e22','#2ecc71','#a29bfe','#fd79a8','#6c5ce7','#00cec9','#fdcb6e','#e17055','#74b9ff','#55efc4','#b2bec3'];
+
+// ─── PARAMETRELER ──────────────────────────────────────────────────────────
 let P = { rsiBuy:35, rsiSell:65, tradePct:0.20, stopLoss:-0.03, takeProfit:0.05 };
+
+// ─── STATE ────────────────────────────────────────────────────────────────
 const S = {};
 let cur = null;
 const price={}, prev={}, open={}, hist={};
@@ -223,27 +268,33 @@ let wsOk=false, trades=[], ws=null;
 const MAXH=80;
 let logFilter='all';
 
+// ─── LOCAL STORAGE (veri kaybolmasın) ────────────────────────────────────
 function saveState(){
   try{
-    const data={P,activeCoins:ALL_COINS.filter(c=>S[c.id]&&S[c.id].enabled).map(c=>({id:c.id,sym:c.sym,dp:c.dp,color:c.color,budget:S[c.id].budget})),trades:trades.slice(-200)};
-    localStorage.setItem('autotrader_state',JSON.stringify(data));
+    const data={
+      P,
+      activeCoins: ALL_COINS.filter(c=>S[c.id]&&S[c.id].enabled).map(c=>({id:c.id,sym:c.sym,dp:c.dp,color:c.color,budget:S[c.id].budget})),
+      trades: trades.slice(-200), // son 200 işlem
+    };
+    localStorage.setItem('autotrader_state', JSON.stringify(data));
   }catch(e){}
 }
 
 function loadState(){
   try{
     const raw=localStorage.getItem('autotrader_state');
-    if(!raw)return false;
+    if(!raw) return false;
     const data=JSON.parse(raw);
-    if(data.P)P={...P,...data.P};
-    if(data.trades)trades=data.trades;
-    if(data.activeCoins&&data.activeCoins.length){
+    if(data.P) P={...P,...data.P};
+    if(data.trades) trades=data.trades;
+    if(data.activeCoins && data.activeCoins.length){
+      // Kaydedilen aktif coinleri yükle
       data.activeCoins.forEach(c=>{
-        if(!ALL_COINS.find(x=>x.id===c.id))ALL_COINS.push({id:c.id,sym:c.sym,dp:c.dp||4,color:c.color||'#888'});
-        if(!S[c.id])S[c.id]={enabled:false,budget:c.budget||1000,usdt:c.budget||1000,held:0,buypx:null,botOn:false};
+        if(!ALL_COINS.find(x=>x.id===c.id)){
+          ALL_COINS.push({id:c.id,sym:c.sym,dp:c.dp||4,color:c.color||'#888'});
+        }
+        initCoin(c.id, c.budget||1000);
         S[c.id].enabled=true;
-        const coin=ALL_COINS.find(x=>x.id===c.id);
-        if(coin){if(!price[coin.sym])price[coin.sym]=null;if(!hist[coin.sym])hist[coin.sym]=[];}
       });
       return true;
     }
@@ -251,35 +302,77 @@ function loadState(){
   return false;
 }
 
+function initCoin(id, budget=1000){
+  if(!S[id]){
+    S[id]={enabled:false,budget,usdt:budget,held:0,buypx:null,botOn:false};
+  }
+  const c=ALL_COINS.find(x=>x.id===id);
+  if(c){
+    if(!price[c.sym]) price[c.sym]=null;
+    if(!prev[c.sym]) prev[c.sym]=null;
+    if(!open[c.sym]) open[c.sym]=null;
+    if(!hist[c.sym]) hist[c.sym]=[];
+  }
+}
+
+// ─── BİNANCE'DAN TÜM COİNLERİ ÇEK ──────────────────────────────────────
 async function fetchBinanceSymbols(){
   try{
     const res=await fetch('https://api.binance.com/api/v3/ticker/24hr');
     const data=await res.json();
-    binanceSymbols=data.filter(d=>d.symbol.endsWith('USDT')&&parseFloat(d.quoteVolume)>500000).map(d=>({sym:d.symbol,id:d.symbol.replace('USDT',''),price:parseFloat(d.lastPrice),pct:parseFloat(d.priceChangePercent),vol:parseFloat(d.quoteVolume)})).sort((a,b)=>b.vol-a.vol);
+    binanceSymbols=data
+      .filter(d=>d.symbol.endsWith('USDT')&&parseFloat(d.quoteVolume)>1000000)
+      .map(d=>({
+        sym:d.symbol,
+        id:d.symbol.replace('USDT',''),
+        price:parseFloat(d.lastPrice),
+        pct:parseFloat(d.priceChangePercent),
+        vol:parseFloat(d.quoteVolume)
+      }))
+      .sort((a,b)=>b.vol-a.vol);
+    
+    // ALL_COINS'u Binance verisiyle güncelle
     binanceSymbols.forEach((b,i)=>{
-      if(!ALL_COINS.find(c=>c.id===b.id)){const dp=b.price>=100?2:b.price>=1?3:b.price>=0.01?4:5;ALL_COINS.push({id:b.id,sym:b.sym,dp,color:COIN_COLORS[i%COIN_COLORS.length]});}
-      if(!S[b.id])S[b.id]={enabled:false,budget:1000,usdt:1000,held:0,buypx:null,botOn:false};
-      if(price[b.sym]===undefined)price[b.sym]=b.price;
-      if(!open[b.sym])open[b.sym]=null;
-      if(!hist[b.sym])hist[b.sym]=[];
+      if(!ALL_COINS.find(c=>c.id===b.id)){
+        const dp=b.price>=100?2:b.price>=1?3:b.price>=0.01?4:b.price>=0.0001?5:6;
+        ALL_COINS.push({id:b.id,sym:b.sym,dp,color:COIN_COLORS[i%COIN_COLORS.length]});
+      }
+      if(!S[b.id]) S[b.id]={enabled:false,budget:1000,usdt:1000,held:0,buypx:null,botOn:false};
+      if(!price[b.sym]) price[b.sym]=b.price;
+      if(!open[b.sym]) open[b.sym]=null;
+      if(!hist[b.sym]) hist[b.sym]=[];
     });
+    renderSearch(document.getElementById('coin-search')?.value||'');
   }catch(e){
+    // Fallback: varsayılan coin listesi
     DEFAULT_COINS.forEach((id,i)=>{
-      if(!ALL_COINS.find(c=>c.id===id)){ALL_COINS.push({id,sym:id+'USDT',dp:id==='BTC'||id==='ETH'?2:4,color:COIN_COLORS[i%COIN_COLORS.length]});if(!S[id])S[id]={enabled:false,budget:1000,usdt:1000,held:0,buypx:null,botOn:false};}
+      if(!ALL_COINS.find(c=>c.id===id)){
+        ALL_COINS.push({id,sym:id+'USDT',dp:id==='BTC'||id==='ETH'?2:4,color:COIN_COLORS[i%COIN_COLORS.length]});
+        if(!S[id]) S[id]={enabled:false,budget:1000,usdt:1000,held:0,buypx:null,botOn:false};
+      }
     });
   }
 }
 
+// ─── CANVAS ──────────────────────────────────────────────────────────────
 const cv=document.getElementById('chart'),cx=cv.getContext('2d');
 function rsz(){cv.width=cv.parentElement.clientWidth;cv.height=150;}
 rsz();window.addEventListener('resize',()=>{rsz();draw();});
 
+// ─── WEBSOCKET ───────────────────────────────────────────────────────────
 function connect(){
   if(ws){try{ws.close();}catch(e){}}
   badge('connecting');
   const activeSyms=ALL_COINS.filter(c=>S[c.id]&&S[c.id].enabled).map(c=>c.sym.toLowerCase()+'@miniTicker');
-  const streams=(activeSyms.length?activeSyms:DEFAULT_COINS.slice(0,6).map(id=>id.toLowerCase()+'usdt@miniTicker')).join('/');
-  ws=new WebSocket(`wss://stream.binance.com:9443/stream?streams=${streams}`);
+  if(!activeSyms.length){
+    // Hiç aktif coin yoksa varsayılanları bağla
+    const defStreams=DEFAULT_COINS.slice(0,10).map(id=>id.toLowerCase()+'usdt@miniTicker').join('/');
+    ws=new WebSocket(`wss://stream.binance.com:9443/stream?streams=${defStreams}`);
+  } else {
+    // Aktif coinleri bağla + binance tüm coinler için ek stream
+    const streams=activeSyms.join('/');
+    ws=new WebSocket(`wss://stream.binance.com:9443/stream?streams=${streams}`);
+  }
   ws.onopen=()=>{badge('ok');document.getElementById('overlay').classList.add('gone');updBtns();};
   ws.onmessage=e=>{
     try{
@@ -293,6 +386,7 @@ function connect(){
       const coin=ALL_COINS.find(c=>c.sym===sym);if(!coin)return;
       if(S[coin.id]&&S[coin.id].enabled)updChip(coin,p,o);
       if(S[coin.id]&&S[coin.id].botOn)logic(coin);
+      if(S[coin.id]&&S[coin.id].botOn)checkAlerts(coin,p);
       if(cur&&sym===cur.sym){updPrice(p,o,v);updInds();draw();updPF();}
       if(S[coin.id]&&S[coin.id].enabled)updTotal();
     }catch(_){}
@@ -303,28 +397,54 @@ function connect(){
 
 function badge(s){wsOk=s==='ok';const b=document.getElementById('ws-badge');b.className='ws-badge'+(s==='ok'?' ok':s==='err'?' err':'');b.textContent={ok:'CANLI',connecting:'BAĞLANIYOR',err:'KESİLDİ'}[s];}
 
+// ─── BOT MANTIĞI ─────────────────────────────────────────────────────────
 function logic(coin){
   const h=hist[coin.sym],p=price[coin.sym],st=S[coin.id];
   if(!h||h.length<20||!p)return;
   const rsi=calcRSI(h),ma7=calcMA(h,7),ma25=calcMA(h,25);
   if(rsi===null||!ma7||!ma25)return;
   let sig='HOLD',why='RSI nötr';
-  if(st.held>0&&st.buypx){const chg=(p-st.buypx)/st.buypx;if(chg<=P.stopLoss){sig='SELL';why=`⚠ Stop loss (${(chg*100).toFixed(2)}%)`;}else if(chg>=P.takeProfit){sig='SELL';why=`🎯 Take profit (${(chg*100).toFixed(2)}%)`;}}
+  if(st.held>0&&st.buypx){
+    const chg=(p-st.buypx)/st.buypx;
+    if(chg<=P.stopLoss){sig='SELL';why=`⚠ Stop loss (${(chg*100).toFixed(2)}%)`;}
+    else if(chg>=P.takeProfit){sig='SELL';why=`🎯 Take profit (${(chg*100).toFixed(2)}%)`;}
+  }
   if(sig==='HOLD'){
     if(rsi<=P.rsiBuy&&ma7>ma25){sig='BUY';why=`RSI düşük (${rsi.toFixed(1)}) + MA7↑`;}
     else if(rsi>=P.rsiSell&&ma7<ma25){sig='SELL';why=`RSI yüksek (${rsi.toFixed(1)}) + MA7↓`;}
     else if(rsi<=P.rsiBuy){sig='BUY';why=`RSI aşırı satım (${rsi.toFixed(1)})`;}
     else if(rsi>=P.rsiSell){sig='SELL';why=`RSI aşırı alım (${rsi.toFixed(1)})`;}
   }
-  if(sig==='BUY'&&st.usdt>5){const sp=st.usdt*P.tradePct,am=sp/p;st.usdt-=sp;st.held+=am;if(!st.buypx)st.buypx=p;addTrade('BUY',coin,p,am,null);if(cur&&coin.id===cur.id)flash('g');saveState();}
-  else if(sig==='SELL'&&st.held>0.000001){const sa=st.held*0.5,rc=sa*p,pnl=st.buypx?(p-st.buypx)*sa:0;st.usdt+=rc;st.held-=sa;if(st.held<0.000001){st.held=0;st.buypx=null;}addTrade('SELL',coin,p,sa,pnl);if(cur&&coin.id===cur.id)flash('r');saveState();}
+  if(sig==='BUY'&&st.usdt>5){
+    const sp=st.usdt*P.tradePct,am=sp/p;
+    st.usdt-=sp;st.held+=am;
+    if(!st.buypx)st.buypx=p;
+    addTrade('BUY',coin,p,am,null);
+    if(cur&&coin.id===cur.id)flash('g');
+    saveState();
+  } else if(sig==='SELL'&&st.held>0.000001){
+    const sa=st.held*0.5,rc=sa*p,pnl=st.buypx?(p-st.buypx)*sa:0;
+    st.usdt+=rc;st.held-=sa;
+    if(st.held<0.000001){st.held=0;st.buypx=null;}
+    addTrade('SELL',coin,p,sa,pnl);
+    if(cur&&coin.id===cur.id)flash('r');
+    saveState();
+  }
   if(cur&&coin.id===cur.id)setSig(sig,why);
 }
 
+// ─── HESAPLAMALAR ────────────────────────────────────────────────────────
 function calcMA(a,n){if(!a||a.length<n)return null;return a.slice(-n).reduce((s,v)=>s+v,0)/n;}
 function calcMAArr(a,n){return a.map((_,i)=>i<n-1?null:a.slice(i-n+1,i+1).reduce((s,v)=>s+v,0)/n);}
-function calcRSI(a,n=14){if(!a||a.length<n+1)return null;const ch=a.slice(-(n+1)).map((v,i,x)=>i?v-x[i-1]:0).slice(1);const ag=ch.map(v=>v>0?v:0).reduce((s,v)=>s+v,0)/n;const al=ch.map(v=>v<0?-v:0).reduce((s,v)=>s+v,0)/n;return al===0?100:100-(100/(1+ag/al));}
+function calcRSI(a,n=14){
+  if(!a||a.length<n+1)return null;
+  const ch=a.slice(-(n+1)).map((v,i,x)=>i?v-x[i-1]:0).slice(1);
+  const ag=ch.map(v=>v>0?v:0).reduce((s,v)=>s+v,0)/n;
+  const al=ch.map(v=>v<0?-v:0).reduce((s,v)=>s+v,0)/n;
+  return al===0?100:100-(100/(1+ag/al));
+}
 
+// ─── GRAFİK ──────────────────────────────────────────────────────────────
 function draw(){
   if(!cur)return;
   const h=hist[cur.sym];if(!h||h.length<2)return;
@@ -349,20 +469,104 @@ function draw(){
   m25.forEach((v,i)=>{if(!v){s2=false;return;}s2?cx.lineTo(tx(i),ty(v)):cx.moveTo(tx(i),ty(v));s2=true;});
   cx.strokeStyle='rgba(217,119,6,.45)';cx.lineWidth=1.5;cx.stroke();
   const off=MAXH-h.length;
-  trades.filter(t=>t.sym===cur.sym).forEach(t=>{const idx=t.hi-off;if(idx<0||idx>=h.length)return;cx.beginPath();cx.arc(tx(idx),ty(t.price),4,0,Math.PI*2);cx.fillStyle=t.type==='BUY'?'#059669':'#dc2626';cx.fill();});
+  trades.filter(t=>t.sym===cur.sym).forEach(t=>{
+    const idx=t.hi-off;if(idx<0||idx>=h.length)return;
+    cx.beginPath();cx.arc(tx(idx),ty(t.price),4,0,Math.PI*2);
+    cx.fillStyle=t.type==='BUY'?'#059669':'#dc2626';cx.fill();
+  });
   cx.beginPath();cx.arc(tx(h.length-1),ty(h[h.length-1]),4,0,Math.PI*2);cx.fillStyle=lc;cx.fill();
 }
 
-function fmt(v,c){if(v===null||v===undefined||isNaN(v))return'—';const dp=c?c.dp:2;return v>=1000?'$'+v.toLocaleString('tr-TR',{minimumFractionDigits:dp,maximumFractionDigits:dp}):'$'+v.toFixed(Math.max(dp,2));}
-function fmtAmt(v){if(!v||isNaN(v))return'—';return v<0.0001?v.toExponential(3):v>=1000?v.toLocaleString('tr-TR',{maximumFractionDigits:4}):v.toFixed(6);}
+// ─── UI ──────────────────────────────────────────────────────────────────
+function fmt(v,c){
+  if(v===null||v===undefined||isNaN(v))return'—';
+  const dp=c?c.dp:2;
+  return v>=1000?'$'+v.toLocaleString('tr-TR',{minimumFractionDigits:dp,maximumFractionDigits:dp}):'$'+v.toFixed(Math.max(dp,2));
+}
 
-function updPrice(p,o,v){const pct=(p-o)/o*100,up=pct>=0;const el=document.getElementById('big-price');el.textContent=fmt(p,cur);el.style.color=up?'var(--green)':'var(--red)';const b=document.getElementById('chg-badge');b.textContent=(up?'+':'')+pct.toFixed(2)+'%';b.className='chg-badge '+(up?'up':'dn');if(v)document.getElementById('vol-txt').textContent='24S: '+(v>=1000?(v/1000).toFixed(1)+'K':v.toFixed(0));}
-function updChip(coin,p,o){const el=document.querySelector(`.coin-chip[data-id="${coin.id}"]`);if(!el)return;const pct=(p-o)/o*100,up=pct>=0;const pe=el.querySelector('.chip-price');if(prev[coin.sym]!=null){pe.classList.add(p>=prev[coin.sym]?'tu':'td');setTimeout(()=>pe.classList.remove('tu','td'),350);}pe.textContent=fmt(p,coin);const ce=el.querySelector('.chip-chg');ce.textContent=(up?'+':'')+pct.toFixed(2)+'%';ce.style.color=up?'var(--green)':'var(--red)';}
-function updInds(){if(!cur)return;const h=hist[cur.sym];const rsi=calcRSI(h),ma7=calcMA(h,7),ma25=calcMA(h,25);const mom=h&&h.length>=5?((h[h.length-1]-h[h.length-5])/h[h.length-5]*100).toFixed(2):null;const rv=document.getElementById('v-rsi');if(rsi!==null){rv.textContent=rsi.toFixed(1);rv.style.color=rsi<=P.rsiBuy?'var(--green)':rsi>=P.rsiSell?'var(--red)':'var(--text)';}document.getElementById('v-ma7').textContent=ma7?fmt(ma7,cur):'—';document.getElementById('v-ma25').textContent=ma25?fmt(ma25,cur):'—';document.getElementById('v-mom').textContent=mom?mom+'%':'—';}
-function updPF(){if(!cur)return;const st=S[cur.id],p=price[cur.sym]||0;const cval=st.held*p,total=st.usdt+cval,pnl=total-st.budget,pct=st.budget>0?pnl/st.budget*100:0;const up=pnl>.005,dn=pnl<-.005;document.getElementById('pf-title').textContent=cur.id+' Portföyü';document.getElementById('pf-budget').textContent='$'+st.budget.toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2});document.getElementById('pf-usdt').textContent='$'+st.usdt.toFixed(2);document.getElementById('pf-coin').textContent=fmtAmt(st.held)+' '+cur.id;document.getElementById('pf-cval').textContent='$'+cval.toFixed(2);document.getElementById('pf-total').textContent='$'+total.toFixed(2);const pb=document.getElementById('pnl-bar');pb.className='pnl-bar '+(up?'up':dn?'dn':'zero');pb.textContent=`PNL: ${up?'+':''}$${pnl.toFixed(2)} (${up?'+':''}${pct.toFixed(2)}%)`;}
-function updTotal(){const c=document.getElementById('total-list');c.innerHTML='';let grand=0,gBudget=0;ALL_COINS.filter(x=>S[x.id]&&S[x.id].enabled).forEach(x=>{const st=S[x.id],p=price[x.sym]||0,total=st.usdt+st.held*p,pnl=total-st.budget,up=pnl>=0;grand+=total;gBudget+=st.budget;const row=document.createElement('div');row.className='total-row';row.innerHTML=`<div class="total-coin"><div class="t-dot" style="background:${x.color}"></div><span class="t-lbl">${x.id}</span><span style="font-size:.62rem;font-family:var(--mono);color:var(--sub);margin-left:3px">$${st.budget.toFixed(0)}</span>${S[x.id].botOn?'<span style="font-size:.6rem;color:var(--green)">●</span>':''}</div><div style="text-align:right"><div class="t-val">$${total.toFixed(2)}</div><div style="font-family:var(--mono);font-size:.75rem;font-weight:500;color:${up?'var(--green)':'var(--red)'}">${up?'+':''}$${pnl.toFixed(2)}</div></div>`;c.appendChild(row);});const tpnl=grand-gBudget,tpct=gBudget>0?tpnl/gBudget*100:0,tup=tpnl>=0,tdn=tpnl<-.01;document.getElementById('grand-val').textContent=`$${grand.toFixed(2)}`;const gpb=document.getElementById('grand-pnl-box');gpb.className='grand-pnl '+(tup&&tpnl>.005?'up':tdn?'dn':'zero');const gpv=document.getElementById('grand-pnl-val');gpv.style.color=tup&&tpnl>.005?'var(--green)':tdn?'var(--red)':'var(--sub)';gpv.textContent=`${tup?'+':''}$${tpnl.toFixed(2)} (${tup?'+':''}${tpct.toFixed(2)}%)`;}
-function setSig(sig,why){const b=document.getElementById('sig-box');b.className='sig-box '+sig;document.getElementById('sig-icon').textContent={BUY:'▲',SELL:'▼',HOLD:'⏸'}[sig];const l=document.getElementById('sig-lbl');l.textContent={BUY:'AL SİNYALİ',SELL:'SAT SİNYALİ',HOLD:'BEKLİYOR'}[sig];l.className='sig-lbl '+sig;document.getElementById('sig-why').textContent=why;}
-function flash(t){const el=document.getElementById('chart-card');el.classList.remove('fg','fr');void el.offsetWidth;el.classList.add(t==='g'?'fg':'fr');}
+function fmtAmt(v,id){
+  if(!v||isNaN(v))return'—';
+  return v<0.0001?v.toExponential(3):v>=1000?v.toLocaleString('tr-TR',{maximumFractionDigits:4}):v.toFixed(6);
+}
+
+function updPrice(p,o,v){
+  const pct=(p-o)/o*100,up=pct>=0;
+  const el=document.getElementById('big-price');
+  el.textContent=fmt(p,cur);el.style.color=up?'var(--green)':'var(--red)';
+  const b=document.getElementById('chg-badge');
+  b.textContent=(up?'+':'')+pct.toFixed(2)+'%';b.className='chg-badge '+(up?'up':'dn');
+  if(v)document.getElementById('vol-txt').textContent='24S: '+(v>=1000?(v/1000).toFixed(1)+'K':v.toFixed(0));
+}
+
+function updChip(coin,p,o){
+  const el=document.querySelector(`.coin-chip[data-id="${coin.id}"]`);if(!el)return;
+  const pct=(p-o)/o*100,up=pct>=0;
+  const pe=el.querySelector('.chip-price');
+  if(prev[coin.sym]!==null&&prev[coin.sym]!==undefined){pe.classList.add(p>=prev[coin.sym]?'tu':'td');setTimeout(()=>pe.classList.remove('tu','td'),350);}
+  pe.textContent=fmt(p,coin);
+  const ce=el.querySelector('.chip-chg');
+  ce.textContent=(up?'+':'')+pct.toFixed(2)+'%';ce.style.color=up?'var(--green)':'var(--red)';
+}
+
+function updInds(){
+  if(!cur)return;
+  const h=hist[cur.sym];
+  const rsi=calcRSI(h),ma7=calcMA(h,7),ma25=calcMA(h,25);
+  const mom=h&&h.length>=5?((h[h.length-1]-h[h.length-5])/h[h.length-5]*100).toFixed(2):null;
+  const rv=document.getElementById('v-rsi');
+  if(rsi!==null){rv.textContent=rsi.toFixed(1);rv.style.color=rsi<=P.rsiBuy?'var(--green)':rsi>=P.rsiSell?'var(--red)':'var(--text)';}
+  document.getElementById('v-ma7').textContent=ma7?fmt(ma7,cur):'—';
+  document.getElementById('v-ma25').textContent=ma25?fmt(ma25,cur):'—';
+  document.getElementById('v-mom').textContent=mom?mom+'%':'—';
+}
+
+function updPF(){
+  if(!cur)return;
+  const st=S[cur.id],p=price[cur.sym]||0;
+  const cval=st.held*p,total=st.usdt+cval,pnl=total-st.budget,pct=st.budget>0?pnl/st.budget*100:0;
+  const up=pnl>.005,dn=pnl<-.005;
+  document.getElementById('pf-title').textContent=cur.id+' Portföyü';
+  document.getElementById('pf-budget').textContent='$'+st.budget.toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById('pf-usdt').textContent='$'+st.usdt.toFixed(2);
+  document.getElementById('pf-coin').textContent=fmtAmt(st.held)+' '+cur.id;
+  document.getElementById('pf-cval').textContent='$'+cval.toFixed(2);
+  document.getElementById('pf-total').textContent='$'+total.toFixed(2);
+  const pb=document.getElementById('pnl-bar');
+  pb.className='pnl-bar '+(up?'up':dn?'dn':'zero');
+  pb.textContent=`PNL: ${up?'+':''}$${pnl.toFixed(2)} (${up?'+':''}${pct.toFixed(2)}%)`;
+}
+
+function updTotal(){
+  const c=document.getElementById('total-list');c.innerHTML='';
+  let grand=0,gBudget=0;
+  ALL_COINS.filter(x=>S[x.id]&&S[x.id].enabled).forEach(x=>{
+    const st=S[x.id],p=price[x.sym]||0,total=st.usdt+st.held*p,pnl=total-st.budget,up=pnl>=0;
+    grand+=total;gBudget+=st.budget;
+    const row=document.createElement('div');row.className='total-row';
+    row.innerHTML=`<div class="total-coin"><div class="t-dot" style="background:${x.color}"></div><span class="t-lbl">${x.id}</span><span style="font-size:.62rem;font-family:var(--mono);color:var(--sub);margin-left:3px">$${st.budget.toFixed(0)}</span>${S[x.id].botOn?'<span style="font-size:.6rem;color:var(--green)">●</span>':''}</div><div style="text-align:right"><div class="t-val">$${total.toFixed(2)}</div><div style="font-family:var(--mono);font-size:.75rem;font-weight:500;color:${up?'var(--green)':'var(--red)'}">${up?'+':''}$${pnl.toFixed(2)}</div></div>`;
+    c.appendChild(row);
+  });
+  const tpnl=grand-gBudget,tpct=gBudget>0?tpnl/gBudget*100:0,up=tpnl>=0,dn=tpnl<0;
+  document.getElementById('grand-val').textContent=`$${grand.toFixed(2)}`;
+  const gpb=document.getElementById('grand-pnl-box');
+  gpb.className='grand-pnl '+(up&&tpnl>.005?'up':dn?'dn':'zero');
+  const gpv=document.getElementById('grand-pnl-val');
+  gpv.style.color=up&&tpnl>.005?'var(--green)':dn?'var(--red)':'var(--sub)';
+  gpv.textContent=`${up?'+':''}$${tpnl.toFixed(2)} (${up?'+':''}${tpct.toFixed(2)}%)`;
+}
+
+function setSig(sig,why){
+  const b=document.getElementById('sig-box');b.className='sig-box '+sig;
+  document.getElementById('sig-icon').textContent={BUY:'▲',SELL:'▼',HOLD:'⏸'}[sig];
+  const l=document.getElementById('sig-lbl');
+  l.textContent={BUY:'AL SİNYALİ',SELL:'SAT SİNYALİ',HOLD:'BEKLİYOR'}[sig];l.className='sig-lbl '+sig;
+  document.getElementById('sig-why').textContent=why;
+}
+
+function flash(t){
+  const el=document.getElementById('chart-card');
+  el.classList.remove('fg','fr');void el.offsetWidth;el.classList.add(t==='g'?'fg':'fr');
+}
 
 function addTrade(type,coin,p,amt,pnl){
   const time=new Date().toLocaleTimeString('tr-TR');
@@ -371,57 +575,324 @@ function addTrade(type,coin,p,amt,pnl){
   if(logFilter==='all'||(logFilter==='cur'&&cur&&coin.id===cur.id)){
     const emp=list.querySelector('.empty-msg');if(emp)emp.remove();
     const d=document.createElement('div');d.className=`t-entry ${type.toLowerCase()}`;
-    d.innerHTML=`<div style="min-width:52px"><div class="t-type ${type.toLowerCase()}">${type}</div><div class="t-coin-name" style="color:${coin.color}">${coin.id}</div><div class="t-time">${time}</div></div><div style="flex:1;text-align:center"><div class="t-price2">${fmt(p,coin)}</div><div class="t-amt">${fmtAmt(amt)} ${coin.id}</div></div><div class="t-pnl2" style="color:${pnl===null?'var(--sub)':pnl>=0?'var(--green)':'var(--red)'}">${pnl!==null?(pnl>=0?'+':'')+'$'+pnl.toFixed(2):'—'}</div>`;
+    d.innerHTML=`
+      <div style="min-width:52px">
+        <div class="t-type ${type.toLowerCase()}">${type}</div>
+        <div class="t-coin-name" style="color:${coin.color}">${coin.id}</div>
+        <div class="t-time">${time}</div>
+      </div>
+      <div style="flex:1;text-align:center">
+        <div class="t-price2">${fmt(p,coin)}</div>
+        <div class="t-amt">${fmtAmt(amt)} ${coin.id}</div>
+      </div>
+      <div class="t-pnl2" style="color:${pnl===null?'var(--sub)':pnl>=0?'var(--green)':'var(--red)'}">
+        ${pnl!==null?(pnl>=0?'+':'')+'$'+pnl.toFixed(2):'—'}
+      </div>`;
     list.prepend(d);
   }
 }
 
-function buildBar(){const bar=document.getElementById('coin-bar');bar.innerHTML='';const en=ALL_COINS.filter(c=>S[c.id]&&S[c.id].enabled);if(!cur||!S[cur.id]||!S[cur.id].enabled)cur=en[0]||null;if(!cur)return;en.forEach(c=>{const d=document.createElement('div');d.className='coin-chip'+(c.id===cur.id?' active':'');d.dataset.id=c.id;if(S[c.id].botOn)d.classList.add('bot-on');d.innerHTML=`<div class="chip-name" style="color:${c.color}">${c.id}</div><div class="chip-price">${price[c.sym]?fmt(price[c.sym],c):'—'}</div><div class="chip-chg">—</div>`;d.onclick=()=>pick(c);bar.appendChild(d);});document.getElementById('pair-lbl').textContent=cur.id+' / USDT';}
-function pick(c){cur=c;document.querySelectorAll('.coin-chip').forEach(b=>b.classList.toggle('active',b.dataset.id===c.id));document.getElementById('pair-lbl').textContent=c.id+' / USDT';const p=price[c.sym],o=open[c.sym];if(p&&o)updPrice(p,o,null);updInds();updPF();setSig('HOLD',S[c.id].botOn?'Bot çalışıyor...':'Bot başlatılmadı');updBtns();refreshLog();draw();}
+// ─── COİN BAR ────────────────────────────────────────────────────────────
+function buildBar(){
+  const bar=document.getElementById('coin-bar');bar.innerHTML='';
+  const en=ALL_COINS.filter(c=>S[c.id]&&S[c.id].enabled);
+  if(!cur||!S[cur.id]||!S[cur.id].enabled){cur=en[0]||null;}
+  if(!cur)return;
+  en.forEach(c=>{
+    const d=document.createElement('div');
+    d.className='coin-chip'+(c.id===cur.id?' active':'');
+    d.dataset.id=c.id;
+    if(S[c.id].botOn)d.classList.add('bot-on');
+    d.innerHTML=`<div class="chip-name" style="color:${c.color}">${c.id}</div><div class="chip-price">${price[c.sym]?fmt(price[c.sym],c):'—'}</div><div class="chip-chg">—</div>`;
+    d.onclick=()=>pick(c);bar.appendChild(d);
+  });
+  document.getElementById('pair-lbl').textContent=cur.id+' / USDT';
+}
 
-function setLogFilter(f){logFilter=f;const on='padding:4px 10px;border-radius:8px;border:1.5px solid var(--accent);background:var(--accent);color:#fff;font-family:var(--mono);font-size:.68rem;cursor:pointer;';const off='padding:4px 10px;border-radius:8px;border:1.5px solid var(--border);background:var(--bg);color:var(--sub);font-family:var(--mono);font-size:.68rem;cursor:pointer;';document.getElementById('log-btn-all').style.cssText=f==='all'?on:off;document.getElementById('log-btn-cur').style.cssText=f==='cur'?on:off;refreshLog();}
-function refreshLog(){const list=document.getElementById('trade-list');list.innerHTML='';const ct=(logFilter==='all'?trades:trades.filter(t=>cur&&t.coin===cur.id)).slice().reverse();if(!ct.length){list.innerHTML='<div class="empty-msg">Henüz işlem yok</div>';return;}ct.forEach(t=>{const coin=ALL_COINS.find(c=>c.id===t.coin)||{id:t.coin,sym:t.coin+'USDT',dp:4,color:'#888'};const d=document.createElement('div');d.className=`t-entry ${t.type.toLowerCase()}`;d.innerHTML=`<div style="min-width:52px"><div class="t-type ${t.type.toLowerCase()}">${t.type}</div><div class="t-coin-name" style="color:${t.color||coin.color}">${coin.id}</div><div class="t-time">${t.time||'—'}</div></div><div style="flex:1;text-align:center"><div class="t-price2">${fmt(t.price,coin)}</div><div class="t-amt">${fmtAmt(t.amt)} ${coin.id}</div></div><div class="t-pnl2" style="color:${t.pnl===null?'var(--sub)':t.pnl>=0?'var(--green)':'var(--red)'}">${t.pnl!==null?(t.pnl>=0?'+':'')+'$'+t.pnl.toFixed(2):'—'}</div>`;list.appendChild(d);});}
+function pick(c){
+  cur=c;
+  document.querySelectorAll('.coin-chip').forEach(b=>b.classList.toggle('active',b.dataset.id===c.id));
+  document.getElementById('pair-lbl').textContent=c.id+' / USDT';
+  const p=price[c.sym],o=open[c.sym];if(p&&o)updPrice(p,o,null);
+  updInds();updPF();setSig('HOLD',S[c.id].botOn?'Bot çalışıyor...':'Bot başlatılmadı');
+  updBtns();refreshLog();draw();updAlertUI();
+}
 
-function updBtns(){if(!cur)return;const on=S[cur.id].botOn;const sb=document.getElementById('btn-start'),db=document.getElementById('btn-stop');if(on){sb.disabled=false;sb.classList.add('running');sb.textContent='● Çalışıyor';sb.onclick=null;db.disabled=false;}else{sb.disabled=!wsOk;sb.classList.remove('running');sb.textContent='▶ Başlat';sb.onclick=startBot;db.disabled=true;}document.querySelectorAll('.coin-chip').forEach(b=>{const c=ALL_COINS.find(x=>x.id===b.dataset.id);if(c&&S[c.id])b.classList.toggle('bot-on',S[c.id].botOn);});}
+// ─── FİYAT ALARMI ────────────────────────────────────────────────────────
+function updAlertUI(){
+  if(!cur)return;
+  document.getElementById('alert-title').textContent=cur.id+' Fiyat Alarmı';
+  const st=S[cur.id];
+  document.getElementById('alert-up-chk').checked=st.alertUpOn||false;
+  document.getElementById('alert-up-val').value=st.alertUp||'';
+  document.getElementById('alert-dn-chk').checked=st.alertDnOn||false;
+  document.getElementById('alert-dn-val').value=st.alertDn||'';
+  document.getElementById('alert-triggered').classList.remove('show');
+}
+
+function checkAlerts(coin,p){
+  const st=S[coin.id];
+  if(!st.botOn)return;
+  if(st.alertUpOn&&st.alertUp&&p>=parseFloat(st.alertUp)){
+    triggerAlert(coin,'up',p);
+  } else if(st.alertDnOn&&st.alertDn&&p<=parseFloat(st.alertDn)){
+    triggerAlert(coin,'dn',p);
+  }
+}
+
+function triggerAlert(coin,dir,p){
+  const st=S[coin.id];
+  st.botOn=false;
+  if(dir==='up')st.alertUpOn=false;
+  else st.alertDnOn=false;
+  if(cur&&coin.id===cur.id){
+    updBtns();
+    setSig('HOLD',dir==='up'?`🎯 Hedef fiyata ulaşıldı ($${p.toLocaleString()})`:`⚠️ Alt sınıra düşüldü ($${p.toLocaleString()})`);
+    document.getElementById('alert-triggered').textContent=dir==='up'?`🎯 ${coin.id} hedef fiyata ulaştı — Bot durduruldu!`:`⚠️ ${coin.id} alt sınıra düştü — Bot durduruldu!`;
+    document.getElementById('alert-triggered').classList.add('show');
+    updAlertUI();
+  }
+  showToast(dir==='up'?`🎯 ${coin.id} $${p.toLocaleString()} → Hedef! Bot durdu.`:`⚠️ ${coin.id} $${p.toLocaleString()} → Alt sınır! Bot durdu.`);
+  saveState();
+}
+
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3500);
+}
+
+document.addEventListener('change',e=>{
+  if(!cur)return;
+  const st=S[cur.id];
+  if(e.target.id==='alert-up-chk'){st.alertUpOn=e.target.checked;saveState();}
+  if(e.target.id==='alert-dn-chk'){st.alertDnOn=e.target.checked;saveState();}
+  if(e.target.id==='alert-up-val'){st.alertUp=e.target.value;saveState();}
+  if(e.target.id==='alert-dn-val'){st.alertDn=e.target.value;saveState();}
+});
+
+// ─── LOG FİLTRE ──────────────────────────────────────────────────────────
+function setLogFilter(f){
+  logFilter=f;
+  const on='padding:4px 10px;border-radius:8px;border:1.5px solid var(--accent);background:var(--accent);color:#fff;font-family:var(--mono);font-size:.68rem;cursor:pointer;';
+  const off='padding:4px 10px;border-radius:8px;border:1.5px solid var(--border);background:var(--bg);color:var(--sub);font-family:var(--mono);font-size:.68rem;cursor:pointer;';
+  document.getElementById('log-btn-all').style.cssText=f==='all'?on:off;
+  document.getElementById('log-btn-cur').style.cssText=f==='cur'?on:off;
+  refreshLog();
+}
+
+function refreshLog(){
+  const list=document.getElementById('trade-list');list.innerHTML='';
+  const ct=(logFilter==='all'?trades:trades.filter(t=>cur&&t.coin===cur.id)).slice().reverse();
+  if(!ct.length){list.innerHTML='<div class="empty-msg">Henüz işlem yok</div>';return;}
+  ct.forEach(t=>{
+    const coin=ALL_COINS.find(c=>c.id===t.coin)||{id:t.coin,sym:t.coin+'USDT',dp:4,color:'#888'};
+    const d=document.createElement('div');d.className=`t-entry ${t.type.toLowerCase()}`;
+    d.innerHTML=`
+      <div style="min-width:52px">
+        <div class="t-type ${t.type.toLowerCase()}">${t.type}</div>
+        <div class="t-coin-name" style="color:${t.color||coin.color}">${coin.id}</div>
+        <div class="t-time">${t.time||'—'}</div>
+      </div>
+      <div style="flex:1;text-align:center">
+        <div class="t-price2">${fmt(t.price,coin)}</div>
+        <div class="t-amt">${fmtAmt(t.amt)} ${coin.id}</div>
+      </div>
+      <div class="t-pnl2" style="color:${t.pnl===null?'var(--sub)':t.pnl>=0?'var(--green)':'var(--red)'}">
+        ${t.pnl!==null?(t.pnl>=0?'+':'')+'$'+t.pnl.toFixed(2):'—'}
+      </div>`;
+    list.appendChild(d);
+  });
+}
+
+// ─── BOT BUTONLARI ───────────────────────────────────────────────────────
+function updBtns(){
+  if(!cur)return;
+  const on=S[cur.id].botOn;
+  const sb=document.getElementById('btn-start'),db=document.getElementById('btn-stop');
+  if(on){sb.disabled=false;sb.classList.add('running');sb.textContent='● Çalışıyor';sb.onclick=null;db.disabled=false;}
+  else{sb.disabled=!wsOk;sb.classList.remove('running');sb.textContent='▶ Başlat';sb.onclick=startBot;db.disabled=true;}
+  document.querySelectorAll('.coin-chip').forEach(b=>{
+    const c=ALL_COINS.find(x=>x.id===b.dataset.id);if(c&&S[c.id])b.classList.toggle('bot-on',S[c.id].botOn);
+  });
+}
+
 function startBot(){if(!wsOk||!cur)return;S[cur.id].botOn=true;setSig('HOLD','Bot çalışıyor, sinyal bekleniyor...');updBtns();saveState();}
 function stopBot(){if(!cur)return;S[cur.id].botOn=false;setSig('HOLD','Bot durduruldu');updBtns();saveState();}
-function resetCoin(){if(!cur)return;stopBot();const st=S[cur.id];st.usdt=st.budget;st.held=0;st.buypx=null;trades=trades.filter(t=>t.coin!==cur.id);document.getElementById('trade-list').innerHTML='<div class="empty-msg">Henüz işlem yok</div>';updPF();updTotal();setSig('HOLD','Sıfırlandı');saveState();}
+function resetCoin(){
+  if(!cur)return;
+  stopBot();const st=S[cur.id];
+  st.usdt=st.budget;st.held=0;st.buypx=null;
+  trades=trades.filter(t=>t.coin!==cur.id);
+  document.getElementById('trade-list').innerHTML='<div class="empty-msg">Henüz işlem yok</div>';
+  updPF();updTotal();setSig('HOLD','Sıfırlandı');saveState();
+}
 
-function openSettings(){document.getElementById('s-rb').value=P.rsiBuy;document.getElementById('s-rs').value=P.rsiSell;document.getElementById('s-tp').value=Math.round(P.tradePct*100);document.getElementById('s-sl').value=Math.round(P.stopLoss*100);document.getElementById('s-tp2').value=Math.round(P.takeProfit*100);renderActiveList();document.getElementById('coin-search').value='';renderSearch('');document.getElementById('drw-overlay').classList.add('open');document.getElementById('drawer').classList.add('open');}
-function closeSettings(){document.getElementById('drw-overlay').classList.remove('open');document.getElementById('drawer').classList.remove('open');}
-function renderActiveList(){const el=document.getElementById('active-list');el.innerHTML='';const en=ALL_COINS.filter(c=>S[c.id]&&S[c.id].enabled);if(!en.length){el.innerHTML='<div class="no-result">Hiç aktif coin yok</div>';return;}en.forEach(c=>{const st=S[c.id],p=price[c.sym];const row=document.createElement('div');row.className='ac-row';row.innerHTML=`<div class="ac-dot" style="background:${c.color}"></div><div class="ac-info"><div class="ac-name">${c.id} <span style="font-size:.65rem;color:var(--sub);font-weight:400">/USDT</span></div><div class="ac-price">${p?fmt(p,c):'bağlanıyor...'}</div></div><div class="ac-budget-wrap"><input class="ac-budget" type="number" value="${st.budget}" min="10" onchange="changeBudget('${c.id}',this.value)"><span class="ac-unit">$</span></div><button class="ac-rm" onclick="removeCoin('${c.id}')" title="Kaldır">✕</button>`;el.appendChild(row);});}
-function changeBudget(id,val){const v=parseFloat(val);if(isNaN(v)||v<10)return;const st=S[id];if(st.held===0)st.usdt=v;st.budget=v;saveState();}
-function removeCoin(id){if(S[id].botOn){S[id].botOn=false;if(cur&&id===cur.id)setSig('HOLD','Bot durduruldu');}S[id].enabled=false;buildBar();renderActiveList();renderSearch(document.getElementById('coin-search').value);updTotal();saveState();}
+// ─── SETTINGS DRAWER ─────────────────────────────────────────────────────
+function openSettings(){
+  document.getElementById('s-rb').value=P.rsiBuy;
+  document.getElementById('s-rs').value=P.rsiSell;
+  document.getElementById('s-tp').value=Math.round(P.tradePct*100);
+  document.getElementById('s-sl').value=Math.round(P.stopLoss*100);
+  document.getElementById('s-tp2').value=Math.round(P.takeProfit*100);
+  renderActiveList();
+  document.getElementById('coin-search').value='';
+  renderSearch('');
+  document.getElementById('drw-overlay').classList.add('open');
+  document.getElementById('drawer').classList.add('open');
+}
 
+function closeSettings(){
+  document.getElementById('drw-overlay').classList.remove('open');
+  document.getElementById('drawer').classList.remove('open');
+}
+
+function renderActiveList(){
+  const el=document.getElementById('active-list');el.innerHTML='';
+  const en=ALL_COINS.filter(c=>S[c.id]&&S[c.id].enabled);
+  if(!en.length){el.innerHTML='<div class="no-result">Hiç aktif coin yok</div>';return;}
+  en.forEach(c=>{
+    const st=S[c.id],p=price[c.sym];
+    const row=document.createElement('div');row.className='ac-row';
+    row.innerHTML=`<div class="ac-dot" style="background:${c.color}"></div><div class="ac-info"><div class="ac-name">${c.id} <span style="font-size:.65rem;color:var(--sub);font-weight:400">/USDT</span></div><div class="ac-price">${p?fmt(p,c):'bağlanıyor...'}</div></div><div class="ac-budget-wrap"><input class="ac-budget" type="number" value="${st.budget}" min="10" onchange="changeBudget('${c.id}',this.value)"><span class="ac-unit">$</span></div><button class="ac-rm" onclick="removeCoin('${c.id}')" title="Kaldır">✕</button>`;
+    el.appendChild(row);
+  });
+}
+
+function changeBudget(id,val){
+  const v=parseFloat(val);if(isNaN(v)||v<10)return;
+  const st=S[id];if(st.held===0)st.usdt=v;st.budget=v;saveState();
+}
+
+function removeCoin(id){
+  if(S[id].botOn){S[id].botOn=false;if(cur&&id===cur.id)setSig('HOLD','Bot durduruldu');}
+  S[id].enabled=false;
+  buildBar();renderActiveList();
+  renderSearch(document.getElementById('coin-search').value);
+  updTotal();saveState();
+}
+
+// ─── COİN ARAMA (Binance'daki tüm coinler) ───────────────────────────────
 function renderSearch(q){
   q=(q||'').trim().toUpperCase();
   const el=document.getElementById('search-list');el.innerHTML='';
+  
+  // Aktif olmayan coinleri filtrele
   let pool;
-  if(binanceSymbols.length){pool=binanceSymbols.filter(b=>!(S[b.id]&&S[b.id].enabled)&&(!q||b.id.includes(q)||b.sym.includes(q))).slice(0,30);}
-  else{pool=ALL_COINS.filter(c=>!(S[c.id]&&S[c.id].enabled)&&(!q||c.id.includes(q))).slice(0,30);}
-  if(!pool.length){el.innerHTML=`<div class="no-result">${q?'Sonuç bulunamadı':'Tüm coinler aktif ✓'}</div>`;return;}
-  pool.forEach(b=>{const id=b.id;const coin=ALL_COINS.find(c=>c.id===id)||{id,sym:id+'USDT',dp:4,color:'#888'};const p=b.price||price[coin.sym];const pct=b.pct!=null?b.pct:null;const up=pct>=0;const row=document.createElement('div');row.className='sr-row';row.innerHTML=`<div class="sr-dot" style="background:${coin.color}"></div><div class="sr-info"><div class="sr-name">${id} <span style="font-size:.65rem;color:var(--sub);font-weight:400">/USDT</span></div><div class="sr-price">${p?'$'+parseFloat(p).toLocaleString('tr-TR',{maximumSignificantDigits:5}):'—'}</div></div><div class="sr-chg" style="color:${pct!=null?(up?'var(--green)':'var(--red)'):'var(--sub)'}">${pct!=null?(up?'+':'')+parseFloat(pct).toFixed(2)+'%':'—'}</div><button class="sr-add" onclick="addCoin('${id}')">+ Ekle</button>`;el.appendChild(row);});
+  if(binanceSymbols.length){
+    pool=binanceSymbols.filter(b=>{
+      if(S[b.id]&&S[b.id].enabled)return false;
+      if(!q)return true;
+      return b.id.includes(q)||b.sym.includes(q);
+    }).slice(0,30);
+  } else {
+    pool=ALL_COINS.filter(c=>{
+      if(S[c.id]&&S[c.id].enabled)return false;
+      if(!q)return true;
+      return c.id.includes(q)||c.sym.includes(q);
+    }).slice(0,30);
+  }
+  
+  if(!pool.length){
+    el.innerHTML=`<div class="no-result">${q?'Sonuç bulunamadı':'Tüm coinler zaten aktif ✓'}</div>`;
+    return;
+  }
+  
+  pool.forEach(b=>{
+    const id=b.id||b;
+    const coin=ALL_COINS.find(c=>c.id===id)||{id,sym:id+'USDT',dp:4,color:'#888'};
+    const p=b.price||price[coin.sym];
+    const pct=b.pct||null;
+    const up=pct>=0;
+    const row=document.createElement('div');row.className='sr-row';
+    row.innerHTML=`
+      <div class="sr-dot" style="background:${coin.color}"></div>
+      <div class="sr-info">
+        <div class="sr-name">${id} <span style="font-size:.65rem;color:var(--sub);font-weight:400">/USDT</span></div>
+        <div class="sr-price">${p?'$'+parseFloat(p).toLocaleString('tr-TR',{maximumSignificantDigits:5}):'—'}</div>
+      </div>
+      <div class="sr-chg" style="color:${pct!==null?(up?'var(--green)':'var(--red)'):'var(--sub)'}">
+        ${pct!==null?(up?'+':'')+parseFloat(pct).toFixed(2)+'%':'—'}
+      </div>
+      <button class="sr-add" onclick="addCoin('${id}')">+ Ekle</button>`;
+    el.appendChild(row);
+  });
 }
 
-function addCoin(id){let coin=ALL_COINS.find(c=>c.id===id);if(!coin){const bi=binanceSymbols.find(b=>b.id===id);const p=bi?bi.price:0;const dp=p>=100?2:p>=1?3:p>=0.01?4:5;coin={id,sym:id+'USDT',dp,color:COIN_COLORS[ALL_COINS.length%COIN_COLORS.length]};ALL_COINS.push(coin);price[coin.sym]=p||null;open[coin.sym]=null;hist[coin.sym]=[];}if(!S[id])S[id]={enabled:false,budget:1000,usdt:1000,held:0,buypx:null,botOn:false};S[id].enabled=true;if(S[id].held===0)S[id].usdt=S[id].budget;buildBar();renderActiveList();renderSearch(document.getElementById('coin-search').value);connect();updTotal();saveState();}
-
-function saveSettings(){const rb=parseInt(document.getElementById('s-rb').value);const rs=parseInt(document.getElementById('s-rs').value);const tp=parseFloat(document.getElementById('s-tp').value);const sl=parseFloat(document.getElementById('s-sl').value);const tp2=parseFloat(document.getElementById('s-tp2').value);if(rb>=rs){alert('RSI AL eşiği SAT eşiğinden küçük olmalı!');return;}if(tp<1||tp>100){alert('İşlem büyüklüğü 1-100 arası olmalı');return;}P.rsiBuy=rb;P.rsiSell=rs;P.tradePct=tp/100;P.stopLoss=sl/100;P.takeProfit=tp2/100;document.getElementById('params-line').textContent=`RSI AL≤${rb} / SAT≥${rs} · TP +${tp2}% · SL ${sl}% · İşlem %${tp}`;const btn=document.getElementById('drw-save');btn.textContent='✓ Kaydedildi!';btn.classList.add('saved');setTimeout(()=>{btn.textContent='✓ Kaydet';btn.classList.remove('saved');},1800);buildBar();updTotal();updPF();updBtns();saveState();closeSettings();}
-
-setInterval(()=>{document.getElementById('clock').textContent=new Date().toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});},1000);
-
-async function init(){
-  await fetchBinanceSymbols();
-  const loaded=loadState();
-  if(!loaded){
-    ['BTC','ETH','BNB','SOL','AVAX','XRP'].forEach(id=>{const coin=ALL_COINS.find(c=>c.id===id);if(coin){if(!S[id])S[id]={enabled:false,budget:1000,usdt:1000,held:0,buypx:null,botOn:false};S[id].enabled=true;}});
+function addCoin(id){
+  let coin=ALL_COINS.find(c=>c.id===id);
+  if(!coin){
+    const bi=binanceSymbols.find(b=>b.id===id);
+    const p=bi?bi.price:0;
+    const dp=p>=100?2:p>=1?3:p>=0.01?4:5;
+    const colorIdx=ALL_COINS.length%COIN_COLORS.length;
+    coin={id,sym:id+'USDT',dp,color:COIN_COLORS[colorIdx]};
+    ALL_COINS.push(coin);
+    price[coin.sym]=p||null;
+    open[coin.sym]=null;
+    hist[coin.sym]=[];
   }
+  if(!S[id])S[id]={enabled:false,budget:1000,usdt:1000,held:0,buypx:null,botOn:false};
+  S[id].enabled=true;
+  if(S[id].held===0)S[id].usdt=S[id].budget;
+  buildBar();renderActiveList();
+  renderSearch(document.getElementById('coin-search').value);
+  connect(); // Yeni coin için WS bağlantısını yenile
+  updTotal();saveState();
+}
+
+function saveSettings(){
+  const rb=parseInt(document.getElementById('s-rb').value);
+  const rs=parseInt(document.getElementById('s-rs').value);
+  const tp=parseFloat(document.getElementById('s-tp').value);
+  const sl=parseFloat(document.getElementById('s-sl').value);
+  const tp2=parseFloat(document.getElementById('s-tp2').value);
+  if(rb>=rs){alert('RSI AL eşiği SAT eşiğinden küçük olmalı!');return;}
+  if(tp<1||tp>100){alert('İşlem büyüklüğü 1-100 arası olmalı');return;}
+  P.rsiBuy=rb;P.rsiSell=rs;P.tradePct=tp/100;P.stopLoss=sl/100;P.takeProfit=tp2/100;
+  document.getElementById('params-line').textContent=`RSI AL≤${rb} / SAT≥${rs} · TP +${tp2}% · SL ${sl}% · İşlem %${tp}`;
+  const btn=document.getElementById('drw-save');
+  btn.textContent='✓ Kaydedildi!';btn.classList.add('saved');
+  setTimeout(()=>{btn.textContent='✓ Kaydet';btn.classList.remove('saved');},1800);
+  buildBar();updTotal();updPF();updBtns();
+  saveState();closeSettings();
+}
+
+// ─── SAAT ────────────────────────────────────────────────────────────────
+setInterval(()=>{
+  document.getElementById('clock').textContent=new Date().toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+},1000);
+
+// ─── BAŞLAT ──────────────────────────────────────────────────────────────
+async function init(){
+  // Önce Binance'dan tüm coinleri çek
+  await fetchBinanceSymbols();
+  
+  // Kaydedilmiş state'i yükle
+  const loaded=loadState();
+  
+  // Eğer kayıt yoksa varsayılan coinleri aktif et
+  if(!loaded){
+    ['BTC','ETH','BNB','SOL','AVAX','XRP'].forEach((id,i)=>{
+      const coin=ALL_COINS.find(c=>c.id===id);
+      if(coin){
+        if(!S[id])S[id]={enabled:false,budget:1000,usdt:1000,held:0,buypx:null,botOn:false};
+        S[id].enabled=true;
+      }
+    });
+  }
+  
+  // İlk coini seç
   const en=ALL_COINS.filter(c=>S[c.id]&&S[c.id].enabled);
   cur=en[0]||ALL_COINS[0];
-  buildBar();updTotal();
+  
+  buildBar();updTotal();updAlertUI();
   if(trades.length)refreshLog();
   connect();
 }
+
 init();
 </script>
+
 </body>
 </html>
