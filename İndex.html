@@ -149,13 +149,16 @@ canvas{width:100%!important;height:150px!important;display:block;}
 .tu{color:var(--green)!important;}.td{color:var(--red)!important;}
 /* FİYAT ALARMI */
 .alert-box{padding:10px 16px 14px;}
-.alert-row{display:flex;align-items:center;gap:9px;padding:8px 0;border-bottom:1px solid var(--border);}
+.alert-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);}
 .alert-row:last-child{border:none;}
-.alert-chk{width:18px;height:18px;border-radius:5px;border:1.5px solid var(--border);background:var(--bg);cursor:pointer;flex-shrink:0;accent-color:var(--accent);}
-.alert-lbl{font-size:.8rem;color:var(--sub);flex:1;line-height:1.3;}
-.alert-lbl strong{display:block;font-size:.78rem;color:var(--text);}
-.alert-inp{font-family:var(--mono);font-size:.85rem;width:100px;padding:7px 10px;border-radius:9px;border:1.5px solid var(--border);background:var(--bg);text-align:right;outline:none;color:var(--text);}
+.alert-inp{font-family:var(--mono);font-size:.88rem;width:90px;padding:8px 10px;border-radius:9px;border:1.5px solid var(--border);background:var(--bg);text-align:right;outline:none;color:var(--text);flex-shrink:0;}
 .alert-inp:focus{border-color:var(--accent);}
+.alert-lbl{font-size:.82rem;flex:1;line-height:1.35;}
+.alert-lbl strong{display:block;font-size:.84rem;color:var(--text);font-weight:600;}
+.alert-lbl span{font-size:.7rem;color:var(--sub);}
+.alert-chk-wrap{display:flex;flex-direction:column;align-items:center;gap:3px;flex-shrink:0;}
+.alert-chk{width:22px;height:22px;border-radius:6px;cursor:pointer;accent-color:var(--accent);}
+.alert-chk-lbl{font-size:.55rem;color:var(--sub);font-family:var(--mono);text-align:center;}
 .alert-triggered{background:var(--yellow-bg);border:1.5px solid var(--yellow-bd);border-radius:12px;padding:9px 13px;margin:0 16px 12px;font-size:.78rem;color:var(--yellow);font-family:var(--mono);display:none;text-align:center;}
 .alert-triggered.show{display:block;}
 /* BİLDİRİM TOAST */
@@ -220,14 +223,26 @@ canvas{width:100%!important;height:150px!important;display:block;}
     <div id="alert-triggered" class="alert-triggered">⚠️ Fiyat hedefine ulaşıldı — Bot durduruldu!</div>
     <div class="alert-box">
       <div class="alert-row">
-        <input type="checkbox" class="alert-chk" id="alert-up-chk">
-        <div class="alert-lbl"><strong>Gelince dursun</strong>Bu fiyata ulaşınca bot durur</div>
-        <input class="alert-inp" id="alert-up-val" type="number" placeholder="örn: 95000" min="0">
+        <input class="alert-inp" id="alert-up-val" type="number" placeholder="$ hedef" min="0">
+        <div class="alert-lbl">
+          <strong>🎯 Kâr hedefi</strong>
+          <span>Bu fiyata gelince bot durur</span>
+        </div>
+        <div class="alert-chk-wrap">
+          <input type="checkbox" class="alert-chk" id="alert-up-chk">
+          <div class="alert-chk-lbl">alarm</div>
+        </div>
       </div>
       <div class="alert-row">
-        <input type="checkbox" class="alert-chk" id="alert-dn-chk">
-        <div class="alert-lbl"><strong>Düşünce dursun</strong>Bu fiyatın altına düşünce bot durur</div>
-        <input class="alert-inp" id="alert-dn-val" type="number" placeholder="örn: 80000" min="0">
+        <input class="alert-inp" id="alert-dn-val" type="number" placeholder="$ sınır" min="0">
+        <div class="alert-lbl">
+          <strong>⚠️ Zarar sınırı</strong>
+          <span>Bu fiyata düşünce bot durur</span>
+        </div>
+        <div class="alert-chk-wrap">
+          <input type="checkbox" class="alert-chk" id="alert-dn-chk">
+          <div class="alert-chk-lbl">alarm</div>
+        </div>
       </div>
     </div>
   </div>
