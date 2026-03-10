@@ -216,17 +216,17 @@ canvas{width:100%!important;height:150px!important;display:block;}
     </div>
   </div>
 
-  <!-- FİYAT ALARMI KARTI -->
+  <!-- TOPLAM KAR/ZARAR HEDEFİ -->
 
   <div class="card">
-    <div class="card-lbl" id="alert-title">BTC Fiyat Alarmı</div>
+    <div class="card-lbl">Toplam Kâr / Zarar Hedefi</div>
     <div id="alert-triggered" class="alert-triggered">⚠️ Fiyat hedefine ulaşıldı — Bot durduruldu!</div>
     <div class="alert-box">
       <div class="alert-row">
         <input class="alert-inp" id="alert-up-val" type="number" placeholder="$ hedef" min="0">
         <div class="alert-lbl">
           <strong>🎯 Kâr hedefi</strong>
-          <span>Bu fiyata gelince bot durur</span>
+          <span>Toplam kâr bu $'a ulaşınca tüm botlar durur</span>
         </div>
         <div class="alert-chk-wrap">
           <input type="checkbox" class="alert-chk" id="alert-up-chk">
@@ -237,7 +237,7 @@ canvas{width:100%!important;height:150px!important;display:block;}
         <input class="alert-inp" id="alert-dn-val" type="number" placeholder="$ sınır" min="0">
         <div class="alert-lbl">
           <strong>⚠️ Zarar sınırı</strong>
-          <span>Bu fiyata düşünce bot durur</span>
+          <span>Toplam zarar bu $'a düşünce tüm botlar durur</span>
         </div>
         <div class="alert-chk-wrap">
           <input type="checkbox" class="alert-chk" id="alert-dn-chk">
@@ -288,8 +288,9 @@ function saveState(){
   try{
     const data={
       P,
+      globalAlertUpOn,globalAlertDnOn,globalAlertUp,globalAlertDn,
       activeCoins: ALL_COINS.filter(c=>S[c.id]&&S[c.id].enabled).map(c=>({id:c.id,sym:c.sym,dp:c.dp,color:c.color,budget:S[c.id].budget})),
-      trades: trades.slice(-200), // son 200 işlem
+      trades: trades.slice(-200),
     };
     localStorage.setItem('autotrader_state', JSON.stringify(data));
   }catch(e){}
@@ -302,6 +303,7 @@ function loadState(){
     const data=JSON.parse(raw);
     if(data.P) P={...P,...data.P};
     if(data.trades) trades=data.trades;
+    if(data.globalAlertUpOn!=null){globalAlertUpOn=data.globalAlertUpOn;globalAlertDnOn=data.globalAlertDnOn;globalAlertUp=data.globalAlertUp||'';globalAlertDn=data.globalAlertDn||'';}
     if(data.activeCoins && data.activeCoins.length){
       // Kaydedilen aktif coinleri yükle
       data.activeCoins.forEach(c=>{
@@ -633,41 +635,48 @@ function pick(c){
   updBtns();refreshLog();draw();updAlertUI();
 }
 
-// ─── FİYAT ALARMI ────────────────────────────────────────────────────────
+// ─── TOPLAM KAR/ZARAR ALARMI ─────────────────────────────────────────────
+let globalAlertUpOn=false, globalAlertDnOn=false;
+let globalAlertUp='', globalAlertDn='';
+
 function updAlertUI(){
-  if(!cur)return;
-  document.getElementById('alert-title').textContent=cur.id+' Fiyat Alarmı';
-  const st=S[cur.id];
-  document.getElementById('alert-up-chk').checked=st.alertUpOn||false;
-  document.getElementById('alert-up-val').value=st.alertUp||'';
-  document.getElementById('alert-dn-chk').checked=st.alertDnOn||false;
-  document.getElementById('alert-dn-val').value=st.alertDn||'';
+  document.getElementById('alert-up-chk').checked=globalAlertUpOn;
+  document.getElementById('alert-up-val').value=globalAlertUp;
+  document.getElementById('alert-dn-chk').checked=globalAlertDnOn;
+  document.getElementById('alert-dn-val').value=globalAlertDn;
   document.getElementById('alert-triggered').classList.remove('show');
 }
 
 function checkAlerts(coin,p){
-  const st=S[coin.id];
-  if(!st.botOn)return;
-  if(st.alertUpOn&&st.alertUp&&p>=parseFloat(st.alertUp)){
-    triggerAlert(coin,'up',p);
-  } else if(st.alertDnOn&&st.alertDn&&p<=parseFloat(st.alertDn)){
-    triggerAlert(coin,'dn',p);
+  // Toplam PNL hesapla
+  let grand=0,gBudget=0;
+  ALL_COINS.filter(x=>S[x.id]&&S[x.id].enabled).forEach(x=>{
+    const st=S[x.id],px=price[x.sym]||0;
+    grand+=st.usdt+st.held*px;
+    gBudget+=st.budget;
+  });
+  const totalPnl=grand-gBudget;
+
+  if(globalAlertUpOn&&globalAlertUp&&totalPnl>=parseFloat(globalAlertUp)){
+    triggerGlobalAlert('up',totalPnl);
+  } else if(globalAlertDnOn&&globalAlertDn&&totalPnl<=parseFloat(globalAlertDn)){
+    triggerGlobalAlert('dn',totalPnl);
   }
 }
 
-function triggerAlert(coin,dir,p){
-  const st=S[coin.id];
-  st.botOn=false;
-  if(dir==='up')st.alertUpOn=false;
-  else st.alertDnOn=false;
-  if(cur&&coin.id===cur.id){
-    updBtns();
-    setSig('HOLD',dir==='up'?`🎯 Hedef fiyata ulaşıldı ($${p.toLocaleString()})`:`⚠️ Alt sınıra düşüldü ($${p.toLocaleString()})`);
-    document.getElementById('alert-triggered').textContent=dir==='up'?`🎯 ${coin.id} hedef fiyata ulaştı — Bot durduruldu!`:`⚠️ ${coin.id} alt sınıra düştü — Bot durduruldu!`;
-    document.getElementById('alert-triggered').classList.add('show');
-    updAlertUI();
-  }
-  showToast(dir==='up'?`🎯 ${coin.id} $${p.toLocaleString()} → Hedef! Bot durdu.`:`⚠️ ${coin.id} $${p.toLocaleString()} → Alt sınır! Bot durdu.`);
+function triggerGlobalAlert(dir,pnl){
+  // Tüm botları durdur
+  ALL_COINS.forEach(c=>{if(S[c.id])S[c.id].botOn=false;});
+  if(dir==='up')globalAlertUpOn=false;
+  else globalAlertDnOn=false;
+  updBtns();buildBar();
+  const msg=dir==='up'
+    ?`🎯 Kâr hedefine ulaşıldı (+$${pnl.toFixed(2)}) — Tüm botlar durduruldu!`
+    :`⚠️ Zarar sınırına düşüldü ($${pnl.toFixed(2)}) — Tüm botlar durduruldu!`;
+  document.getElementById('alert-triggered').textContent=msg;
+  document.getElementById('alert-triggered').classList.add('show');
+  updAlertUI();
+  showToast(msg);
   saveState();
 }
 
@@ -678,12 +687,10 @@ function showToast(msg){
 }
 
 document.addEventListener('change',e=>{
-  if(!cur)return;
-  const st=S[cur.id];
-  if(e.target.id==='alert-up-chk'){st.alertUpOn=e.target.checked;saveState();}
-  if(e.target.id==='alert-dn-chk'){st.alertDnOn=e.target.checked;saveState();}
-  if(e.target.id==='alert-up-val'){st.alertUp=e.target.value;saveState();}
-  if(e.target.id==='alert-dn-val'){st.alertDn=e.target.value;saveState();}
+  if(e.target.id==='alert-up-chk'){globalAlertUpOn=e.target.checked;saveState();}
+  if(e.target.id==='alert-dn-chk'){globalAlertDnOn=e.target.checked;saveState();}
+  if(e.target.id==='alert-up-val'){globalAlertUp=e.target.value;saveState();}
+  if(e.target.id==='alert-dn-val'){globalAlertDn=e.target.value;saveState();}
 });
 
 // ─── LOG FİLTRE ──────────────────────────────────────────────────────────
