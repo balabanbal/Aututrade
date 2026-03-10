@@ -226,7 +226,7 @@ canvas{width:100%!important;height:150px!important;display:block;}
         <input class="alert-inp" id="alert-up-val" type="number" placeholder="$ hedef" min="0">
         <div class="alert-lbl">
           <strong>🎯 Kâr hedefi</strong>
-          <span>Toplam kâr bu $'a ulaşınca tüm botlar durur</span>
+          <span>Toplam bakiye bu $'a ulaşınca tüm botlar durur</span>
         </div>
         <div class="alert-chk-wrap">
           <input type="checkbox" class="alert-chk" id="alert-up-chk">
@@ -237,7 +237,7 @@ canvas{width:100%!important;height:150px!important;display:block;}
         <input class="alert-inp" id="alert-dn-val" type="number" placeholder="$ sınır" min="0">
         <div class="alert-lbl">
           <strong>⚠️ Zarar sınırı</strong>
-          <span>Toplam zarar bu $'a düşünce tüm botlar durur</span>
+          <span>Toplam bakiye bu $'ın altına düşünce tüm botlar durur</span>
         </div>
         <div class="alert-chk-wrap">
           <input type="checkbox" class="alert-chk" id="alert-dn-chk">
@@ -649,34 +649,31 @@ function updAlertUI(){
 }
 
 function checkAlerts(coin,p){
-  let grand=0,gBudget=0;
+  let grand=0;
   ALL_COINS.filter(x=>S[x.id]&&S[x.id].enabled).forEach(x=>{
     const st=S[x.id],px=price[x.sym]||0;
     grand+=st.usdt+st.held*px;
-    gBudget+=st.budget;
   });
-  const totalPnl=grand-gBudget;
 
-  // Koşul artık sağlanmıyorsa fired flag'i sıfırla (reset için)
-  if(globalAlertUpOn&&globalAlertUp&&totalPnl<parseFloat(globalAlertUp)) alertUpFired=false;
-  if(globalAlertDnOn&&globalAlertDn&&totalPnl>parseFloat(globalAlertDn)) alertDnFired=false;
+  // Koşul artık sağlanmıyorsa fired flag sıfırla
+  if(globalAlertUpOn&&globalAlertUp&&grand<parseFloat(globalAlertUp)) alertUpFired=false;
+  if(globalAlertDnOn&&globalAlertDn&&grand>parseFloat(globalAlertDn)) alertDnFired=false;
 
-  if(globalAlertUpOn&&globalAlertUp&&!alertUpFired&&totalPnl>=parseFloat(globalAlertUp)){
+  if(globalAlertUpOn&&globalAlertUp&&!alertUpFired&&grand>=parseFloat(globalAlertUp)){
     alertUpFired=true;
-    triggerGlobalAlert('up',totalPnl);
-  } else if(globalAlertDnOn&&globalAlertDn&&!alertDnFired&&totalPnl<=parseFloat(globalAlertDn)){
+    triggerGlobalAlert('up',grand);
+  } else if(globalAlertDnOn&&globalAlertDn&&!alertDnFired&&grand<=parseFloat(globalAlertDn)){
     alertDnFired=true;
-    triggerGlobalAlert('dn',totalPnl);
+    triggerGlobalAlert('dn',grand);
   }
 }
 
-function triggerGlobalAlert(dir,pnl){
-  // Tüm botları durdur — tick'i kaldırma!
+function triggerGlobalAlert(dir,balance){
   ALL_COINS.forEach(c=>{if(S[c.id])S[c.id].botOn=false;});
   updBtns();buildBar();
   const msg=dir==='up'
-    ?`🎯 Kâr hedefine ulaşıldı (+$${pnl.toFixed(2)}) — Tüm botlar durduruldu!`
-    :`⚠️ Zarar sınırına düşüldü ($${pnl.toFixed(2)}) — Tüm botlar durduruldu!`;
+    ?`🎯 Bakiye hedefine ulaşıldı ($${balance.toFixed(2)}) — Tüm botlar durduruldu!`
+    :`⚠️ Bakiye sınırına düşüldü ($${balance.toFixed(2)}) — Tüm botlar durduruldu!`;
   document.getElementById('alert-triggered').textContent=msg;
   document.getElementById('alert-triggered').classList.add('show');
   showToast(msg);
