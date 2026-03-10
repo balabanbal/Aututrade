@@ -638,6 +638,7 @@ function pick(c){
 // ─── TOPLAM KAR/ZARAR ALARMI ─────────────────────────────────────────────
 let globalAlertUpOn=false, globalAlertDnOn=false;
 let globalAlertUp='', globalAlertDn='';
+let alertUpFired=false, alertDnFired=false;
 
 function updAlertUI(){
   document.getElementById('alert-up-chk').checked=globalAlertUpOn;
@@ -648,7 +649,6 @@ function updAlertUI(){
 }
 
 function checkAlerts(coin,p){
-  // Toplam PNL hesapla
   let grand=0,gBudget=0;
   ALL_COINS.filter(x=>S[x.id]&&S[x.id].enabled).forEach(x=>{
     const st=S[x.id],px=price[x.sym]||0;
@@ -657,25 +657,28 @@ function checkAlerts(coin,p){
   });
   const totalPnl=grand-gBudget;
 
-  if(globalAlertUpOn&&globalAlertUp&&totalPnl>=parseFloat(globalAlertUp)){
+  // Koşul artık sağlanmıyorsa fired flag'i sıfırla (reset için)
+  if(globalAlertUpOn&&globalAlertUp&&totalPnl<parseFloat(globalAlertUp)) alertUpFired=false;
+  if(globalAlertDnOn&&globalAlertDn&&totalPnl>parseFloat(globalAlertDn)) alertDnFired=false;
+
+  if(globalAlertUpOn&&globalAlertUp&&!alertUpFired&&totalPnl>=parseFloat(globalAlertUp)){
+    alertUpFired=true;
     triggerGlobalAlert('up',totalPnl);
-  } else if(globalAlertDnOn&&globalAlertDn&&totalPnl<=parseFloat(globalAlertDn)){
+  } else if(globalAlertDnOn&&globalAlertDn&&!alertDnFired&&totalPnl<=parseFloat(globalAlertDn)){
+    alertDnFired=true;
     triggerGlobalAlert('dn',totalPnl);
   }
 }
 
 function triggerGlobalAlert(dir,pnl){
-  // Tüm botları durdur
+  // Tüm botları durdur — tick'i kaldırma!
   ALL_COINS.forEach(c=>{if(S[c.id])S[c.id].botOn=false;});
-  if(dir==='up')globalAlertUpOn=false;
-  else globalAlertDnOn=false;
   updBtns();buildBar();
   const msg=dir==='up'
     ?`🎯 Kâr hedefine ulaşıldı (+$${pnl.toFixed(2)}) — Tüm botlar durduruldu!`
     :`⚠️ Zarar sınırına düşüldü ($${pnl.toFixed(2)}) — Tüm botlar durduruldu!`;
   document.getElementById('alert-triggered').textContent=msg;
   document.getElementById('alert-triggered').classList.add('show');
-  updAlertUI();
   showToast(msg);
   saveState();
 }
