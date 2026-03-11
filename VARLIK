@@ -1,1 +1,527 @@
+<!DOCTYPE html>
 
+<html lang="tr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Varlık Yönetim Çizelgesi</title>
+<style>
+:root{
+  --bg:#f0f3f9;--card:#fff;--border:#e4e8f0;--b2:#cbd2e0;
+  --tx:#0f172a;--tx2:#475569;--tx3:#94a3b8;
+  --ac:#2563eb;--acl:#eff4ff;--acd:#1d4ed8;
+  --gr:#16a34a;--go:#92400e;--gol:#fef3c7;--re:#dc2626;
+  --r:14px;--bar:68px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);font-family:-apple-system,'Helvetica Neue',Arial,sans-serif;
+  color:var(--tx);padding:calc(var(--bar)+1.2rem) .9rem 3rem;-webkit-font-smoothing:antialiased}
+.wrap{max-width:860px;margin:0 auto}
+
+.bar{position:fixed;top:0;left:0;right:0;z-index:999;
+background:rgba(255,255,255,.96);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+border-bottom:1px solid var(–border);padding:.7rem .9rem;
+display:flex;align-items:center;justify-content:space-between;gap:.6rem;min-height:var(–bar)}
+.bar-l .t{font-size:.93rem;font-weight:700;letter-spacing:-.02em}
+.bar-l .s{font-size:.65rem;color:var(–tx3);margin-top:.1rem}
+.bar-r{display:flex;flex-direction:column;align-items:flex-end;gap:.15rem}
+.btn-ref{display:inline-flex;align-items:center;gap:.4rem;background:var(–ac);color:#fff;
+border:none;border-radius:8px;padding:.55rem 1.1rem;font-size:.82rem;font-weight:600;
+cursor:pointer;font-family:inherit;white-space:nowrap;transition:background .15s}
+.btn-ref:hover:not(:disabled){background:var(–acd)}
+.btn-ref:disabled{background:#93c5fd;cursor:not-allowed}
+.upd{font-size:.63rem;color:var(–tx3)}
+.err{font-size:.63rem;color:var(–re);font-weight:500}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spinning{display:inline-block;animation:spin .7s linear infinite}
+
+.banner{background:linear-gradient(135deg,#1e3a8a,#2563eb,#3b82f6);
+border-radius:var(–r);padding:1rem 1.3rem;
+display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem;
+margin-bottom:1.1rem;box-shadow:0 4px 20px rgba(37,99,235,.3)}
+.banner .bl{font-size:.65rem;font-weight:600;color:rgba(255,255,255,.7);letter-spacing:.1em;text-transform:uppercase}
+.banner .bv{font-size:clamp(1.4rem,5vw,2rem);font-weight:700;color:#fff;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+
+.card{background:var(–card);border-radius:var(–r);border:1px solid var(–border);
+box-shadow:0 1px 3px rgba(15,23,42,.04),0 6px 20px rgba(15,23,42,.06);margin-bottom:1.1rem;overflow:hidden}
+.card-hd{padding:.75rem 1rem;border-bottom:1px solid var(–border);
+display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.4rem}
+.card-hd h2{font-size:.88rem;font-weight:600}
+.badge{font-size:.61rem;font-weight:500;background:var(–acl);color:var(–ac);padding:.15rem .5rem;border-radius:20px}
+
+.tw{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{width:100%;border-collapse:collapse;min-width:380px}
+thead th{padding:.5rem .75rem;font-size:.61rem;font-weight:600;color:var(–tx3);
+text-transform:uppercase;letter-spacing:.07em;border-bottom:1px solid var(–border);
+background:#fafbfe;white-space:nowrap}
+th.c,td.c{text-align:center}
+th.r,td.r{text-align:right}
+tbody td{padding:.55rem .75rem;font-size:.82rem;border-bottom:1px solid #f1f4fb;vertical-align:middle}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover{background:#f8faff}
+tfoot td{padding:.6rem .75rem;font-size:.75rem;font-weight:600;color:var(–tx2);
+background:#f8f9fe;border-top:2px solid var(–border)}
+.sv{color:var(–ac);font-size:.88rem;text-align:right;font-variant-numeric:tabular-nums}
+
+.tag{display:inline-block;background:var(–gol);color:var(–go);font-size:.59rem;font-weight:700;
+padding:.1rem .32rem;border-radius:4px;margin-right:.3rem;letter-spacing:.04em}
+.aname{font-weight:500}
+.pval{color:var(–gr);font-weight:600;font-variant-numeric:tabular-nums;font-size:.82rem}
+.pload{color:var(–tx3);font-size:.75rem}
+.tval{font-weight:600;font-variant-numeric:tabular-nums}
+.temp{color:var(–tx3)}
+
+input[type=number],input[type=text]{
+background:#f4f6fb;border:1px solid var(–b2);border-radius:7px;
+color:var(–tx);padding:.4rem .5rem;font-size:.83rem;outline:none;width:100%;
+-webkit-appearance:none;transition:border-color .15s,box-shadow .15s}
+input:focus{border-color:var(–ac);box-shadow:0 0 0 3px rgba(37,99,235,.12);background:#fff}
+.in-num{text-align:right;font-variant-numeric:tabular-nums}
+.in-code{text-align:center;font-weight:700;color:var(–ac);letter-spacing:.06em;text-transform:uppercase}
+.fn-wrap{position:relative}
+.fn-wrap input{padding-right:1.6rem}
+.fn-ico{position:absolute;right:.4rem;top:50%;transform:translateY(-50%);font-size:.8rem;pointer-events:none}
+.ok{color:var(–gr)} .no{color:var(–re)}
+
+.btn-del{background:#fff;border:1px solid var(–b2);color:var(–tx3);border-radius:6px;
+width:28px;height:28px;cursor:pointer;font-size:.8rem;
+display:inline-flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0}
+.btn-del:hover:not(:disabled){background:#fef2f2;border-color:#fca5a5;color:var(–re)}
+.btn-del:disabled{opacity:.3;cursor:not-allowed}
+.btn-add{display:inline-flex;align-items:center;gap:.35rem;margin:.6rem .75rem .75rem;
+background:var(–acl);color:var(–ac);border:1.5px dashed #93c5fd;border-radius:8px;
+padding:.42rem .9rem;font-size:.76rem;font-weight:600;cursor:pointer;transition:all .15s}
+.btn-add:hover{background:#dbeafe;border-color:var(–ac)}
+.note{text-align:center;color:var(–tx3);font-size:.64rem;padding-top:.2rem}
+
+@media(max-width:600px){
+body{padding-left:.6rem;padding-right:.6rem}
+thead th,tbody td{padding:.45rem .5rem;font-size:.75rem}
+}
+</style>
+
+</head>
+<body>
+<div class="bar">
+  <div class="bar-l">
+    <div class="t">Varlık Yönetim Çizelgesi</div>
+    <div class="s">Döviz · Altın · Yatırım Fonları</div>
+  </div>
+  <div class="bar-r">
+    <button class="btn-ref" id="btnRef" onclick="fetchAll()">
+      <span id="refIco">↻</span> Fiyatları Yenile
+    </button>
+    <div class="upd" id="lastUp"></div>
+    <div class="err" id="errMsg"></div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="banner">
+    <span class="bl">Toplam Net Varlık</span>
+    <span class="bv" id="grand">— ₺</span>
+  </div>
+
+  <div class="card">
+    <div class="card-hd">
+      <h2>💵 Döviz &amp; Altın</h2>
+      <span class="badge">Anlık serbest piyasa fiyatları</span>
+    </div>
+    <div class="tw">
+      <table>
+        <thead><tr>
+          <th>Varlık</th>
+          <th class="c" style="width:110px">Miktar</th>
+          <th class="c" style="width:130px">Satış Fiyatı (₺)</th>
+          <th class="r" style="width:120px">Toplam (₺)</th>
+        </tr></thead>
+        <tbody>
+          <tr>
+            <td><span class="tag">USD</span><span class="aname">Amerikan Doları</span></td>
+            <td class="c"><input type="number" class="in-num" id="amt-USD" placeholder="0" min="0" step="any" oninput="recalc()"/></td>
+            <td class="c" id="prc-USD-cell"><span class="pload">yükleniyor…</span></td>
+            <td class="r" id="tot-USD"><span class="temp">—</span></td>
+          </tr>
+          <tr>
+            <td><span class="tag">EUR</span><span class="aname">Euro</span></td>
+            <td class="c"><input type="number" class="in-num" id="amt-EUR" placeholder="0" min="0" step="any" oninput="recalc()"/></td>
+            <td class="c" id="prc-EUR-cell"><span class="pload">yükleniyor…</span></td>
+            <td class="r" id="tot-EUR"><span class="temp">—</span></td>
+          </tr>
+          <tr>
+            <td><span class="tag">XAU</span><span class="aname">Gram Altın (Has)</span></td>
+            <td class="c"><input type="number" class="in-num" id="amt-XAU" placeholder="0" min="0" step="any" oninput="recalc()"/></td>
+            <td class="c" id="prc-XAU-cell"><span class="pload">yükleniyor…</span></td>
+            <td class="r" id="tot-XAU"><span class="temp">—</span></td>
+          </tr>
+        </tbody>
+        <tfoot><tr>
+          <td colspan="3">Ara Toplam</td>
+          <td class="sv" id="aSub">—</td>
+        </tr></tfoot>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-hd">
+      <h2>📈 Yatırım Fonları</h2>
+      <span class="badge">Kod gir → ad &amp; fiyat otomatik</span>
+    </div>
+    <div class="tw">
+      <table>
+        <thead><tr>
+          <th style="width:76px">Kod</th>
+          <th>Fon Adı</th>
+          <th class="c" style="width:100px">Fiyat (₺)</th>
+          <th class="c" style="width:90px">Pay</th>
+          <th class="r" style="width:110px">Toplam (₺)</th>
+          <th style="width:36px"></th>
+        </tr></thead>
+        <tbody id="fBody"></tbody>
+        <tfoot><tr>
+          <td colspan="5">Ara Toplam</td>
+          <td class="sv" id="fSub">—</td>
+          <td></td>
+        </tr></tfoot>
+      </table>
+    </div>
+    <button class="btn-add" onclick="addFund()">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Fon Ekle
+    </button>
+  </div>
+  <p class="note">Fon adları TEFAS kaynaklıdır · Yatırım tavsiyesi değildir</p>
+</div>
+
+<script>
+/* ── FON LİSTESİ ── */
+const F={
+"AAK":"AK PORTFÖY ALTERNATİF KARMA FON","AAS":"AK PORTFÖY BEŞİNCİ SERBEST FON",
+"ACP":"AK PORTFÖY BİRİNCİ HİSSE SENEDİ FONU","AES":"AK PORTFÖY PETROL YABANCI BYF FON SEPETİ FONU",
+"AEY":"AK PORTFÖY EUROBOND (USD) BORÇLANMA ARAÇLARI FONU","AFA":"AK PORTFÖY AMERİKA YABANCI HİSSE SENEDİ FONU",
+"AFT":"AK PORTFÖY TEKNOLOJİ YABANCI HİSSE SENEDİ FONU","AGH":"AK PORTFÖY GELİŞEN ÜLKELER YABANCI HİSSE SENEDİ FONU",
+"AGS":"AK PORTFÖY ALTIN KATILIM (DÖVİZ) FON SEPETİ FONU","AHG":"AK PORTFÖY HİSSE SENEDİ FONU",
+"AJK":"AK PORTFÖY ÖZEL SEKTÖR BORÇLANMA ARAÇLARI FONU","AKB":"AK PORTFÖY BORÇLANMA ARAÇLARI FONU",
+"AKP":"AK PORTFÖY KİRA SERTİFİKASI FONU","AKS":"AK PORTFÖY KİRA SERTİFİKASI KATILIM FONU",
+"AKT":"AK PORTFÖY KATILIM HİSSE SENEDİ FONU","ALT":"AK PORTFÖY ALTIN FONU",
+"AMS":"AK PORTFÖY AMERİKAN HİSSE SENEDİ YABANCI FONU","ANK":"AK PORTFÖY KİRA SERTİFİKASI BYF",
+"AOC":"AK PORTFÖY ÖZEL SEKTÖR BORÇLANMA ARAÇLARI (2) FONU","APF":"AK PORTFÖY PARA PİYASASI FONU",
+"ARF":"AK PORTFÖY BIST-50 BYF","ARL":"AK PORTFÖY BIST-100 BYF",
+"ARY":"AK PORTFÖY AVRUPA YABANCI HİSSE SENEDİ FONU","ASD":"AK PORTFÖY SERBEST DÖVİZ FONU",
+"ASH":"AK PORTFÖY SAĞLIK SEKTÖRÜ HİSSE SENEDİ FONU","ASK":"AK PORTFÖY DEĞİŞKEN FON",
+"ATL":"AK PORTFÖY PARA PİYASASI (TL) FONU","AUA":"AK PORTFÖY AMERİKAN DOLARI BYF",
+"AUE":"AK PORTFÖY EURO BYF","AYH":"AK PORTFÖY BIST-30 BYF","AYK":"AK PORTFÖY ÇEVİK KATILIM FONU",
+"AYP":"AK PORTFÖY YABANCI PARA FONU","AYT":"AK PORTFÖY YÜKSEK GETİRİLİ TAHVİL FONU",
+"AZH":"AK PORTFÖY ALTYAPI YABANCI HİSSE SENEDİ FONU","PAL":"AK PORTFÖY ALTINCI SERBEST (DÖVİZ) FON",
+"ONK":"AK PORTFÖY ONİKİNCİ SERBEST (DÖVİZ-AVRO) FON","BDY":"AK PORTFÖY BIST 100 DIŞI ŞİRKETLER HİSSE SENEDİ FONU",
+"SAS":"AK PORTFÖY SABANCI TOPLULUĞU HİSSE SENEDİ FONU","AGA":"AK PORTFÖY ALTIN (DÖVİZ) FONU",
+"DAF":"DENİZ PORTFÖY ALTIN FONU","DAH":"DENİZ PORTFÖY AMERİKAN HİSSE SENEDİ YABANCI FONU",
+"DBA":"DENİZ PORTFÖY BORÇLANMA ARAÇLARI FONU","DBK":"DENİZ PORTFÖY KATILIM (2) FONU",
+"DBT":"DENİZ PORTFÖY BYF TEKNOLOJİ","DCF":"DENİZ PORTFÖY ÇOKLU VARLIK FONU",
+"DDF":"DENİZ PORTFÖY DENGELİ FONU","DEF":"DENİZ PORTFÖY EUROBOND FONU",
+"DHF":"DENİZ PORTFÖY HİSSE SENEDİ FONU","DIF":"DENİZ PORTFÖY İKİNCİ HİSSE SENEDİ FONU",
+"DKA":"DENİZ PORTFÖY KATILIM ALTIN FONU","DKF":"DENİZ PORTFÖY KATILIM FONU",
+"DLF":"DENİZ PORTFÖY LİKİT FONU","DPF":"DENİZ PORTFÖY PARA PİYASASI FONU",
+"DSF":"DENİZ PORTFÖY SERBEST FONU","DTF":"DENİZ PORTFÖY TAHVİL FONU",
+"DVF":"DENİZ PORTFÖY DEĞİŞKEN FONU","DYF":"DENİZ PORTFÖY YABANCI HİSSE SENEDİ FONU",
+"DGA":"DENİZ PORTFÖY ALTIN (DÖVİZ) FONU",
+"EAF":"ECZACIBAŞI PORTFÖY ALTIN FONU","EDF":"ECZACIBAŞI PORTFÖY DÖVİZ FONU",
+"EEF":"ECZACIBAŞI PORTFÖY EUROBOND FONU","EHF":"ECZACIBAŞI PORTFÖY HİSSE SENEDİ FONU",
+"EKF":"ECZACIBAŞI PORTFÖY KATILIM FONU","ELF":"ECZACIBAŞI PORTFÖY LİKİT FONU",
+"EPF":"ECZACIBAŞI PORTFÖY PARA PİYASASI FONU","ESF":"ECZACIBAŞI PORTFÖY SERBEST FONU",
+"ETF":"ECZACIBAŞI PORTFÖY TAHVİL FONU","EYF":"ECZACIBAŞI PORTFÖY YABANCI HİSSE SENEDİ FONU",
+"EGA":"ECZACIBAŞI PORTFÖY ALTIN (DÖVİZ) FONU",
+"FAF":"FİNANS PORTFÖY ALTIN FONU","FBF":"FİNANS PORTFÖY BORÇLANMA ARAÇLARI FONU",
+"FCF":"FİNANS PORTFÖY ÇOKLU VARLIK FONU","FHF":"FİNANS PORTFÖY HİSSE SENEDİ FONU",
+"FIF":"FİNANS PORTFÖY İKİNCİ HİSSE SENEDİ FONU","FKF":"FİNANS PORTFÖY KATILIM FONU",
+"FLF":"FİNANS PORTFÖY LİKİT FONU","FPF":"FİNANS PORTFÖY PARA PİYASASI FONU",
+"FSF":"FİNANS PORTFÖY SERBEST FONU","FTF":"FİNANS PORTFÖY TAHVİL FONU",
+"FYF":"FİNANS PORTFÖY YABANCI HİSSE SENEDİ FONU","FPH":"FİBA PORTFÖY HİSSE SENEDİ FONU",
+"FGA":"FİNANS PORTFÖY ALTIN (DÖVİZ) FONU",
+"GAF":"GARANTİ PORTFÖY ALTIN FONU","GBF":"GARANTİ PORTFÖY BORÇLANMA ARAÇLARI FONU",
+"GHF":"GARANTİ PORTFÖY HİSSE SENEDİ FONU","GKF":"GARANTİ PORTFÖY KATILIM FONU",
+"GLF":"GARANTİ PORTFÖY LİKİT FONU","GPF":"GARANTİ PORTFÖY PARA PİYASASI FONU",
+"GRF":"GARANTİ PORTFÖY REEL VARLIK FONU","GSF":"GARANTİ PORTFÖY SERBEST FONU",
+"GTF":"GARANTİ PORTFÖY TAHVİL FONU","GYF":"GARANTİ PORTFÖY YABANCI HİSSE SENEDİ FONU",
+"GBA":"GARANTİ PORTFÖY BİRİNCİ ALTIN FONU",
+"GEA":"GEDİK PORTFÖY ALTIN FONU","GEB":"GEDİK PORTFÖY BİRİNCİ KARMA FONU",
+"GED":"GEDİK PORTFÖY DÖVİZ FONU","GEH":"GEDİK PORTFÖY HİSSE SENEDİ FONU",
+"GEK":"GEDİK PORTFÖY KATILIM FONU","GEP":"GEDİK PORTFÖY PARA PİYASASI FONU",
+"GES":"GEDİK PORTFÖY SERBEST FONU","GET":"GEDİK PORTFÖY TAHVİL FONU",
+"GEY":"GEDİK PORTFÖY YABANCI HİSSE SENEDİ FONU","GGA":"GEDİK PORTFÖY ALTIN (DÖVİZ) FONU",
+"GUV":"GÜVEN PORTFÖY HİSSE SENEDİ FONU",
+"HAF":"HALK PORTFÖY ALTIN FONU","HBF":"HALK PORTFÖY BORÇLANMA ARAÇLARI FONU",
+"HHF":"HALK PORTFÖY HİSSE SENEDİ FONU","HKF":"HALK PORTFÖY KATILIM FONU",
+"HLF":"HALK PORTFÖY LİKİT FONU","HOF":"HALK PORTFÖY ÖZEL FONU",
+"HPF":"HALK PORTFÖY PARA PİYASASI FONU","HTF":"HALK PORTFÖY TAHVİL FONU",
+"HCA":"HALK PORTFÖY ALTIN (DÖVİZ) FONU",
+"IAM":"İŞ PORTFÖY AGRESİF FON SEPETİ FONU","IBD":"İŞ PORTFÖY BORÇLANMA ARAÇLARI FONU",
+"IDF":"İŞ PORTFÖY DÖVİZ FONU","IDH":"İŞ PORTFÖY BIST 100 DIŞI ŞİRKETLER HİSSE SENEDİ FONU",
+"IEF":"İŞ PORTFÖY EUROBOND (USD) BORÇLANMA ARAÇLARI FONU","IGF":"İŞ PORTFÖY GİRİŞİM SERMAYESİ YATIRIM FONU",
+"IHF":"İŞ PORTFÖY HİSSE SENEDİ FONU","IKF":"İŞ PORTFÖY KATILIM FONU",
+"ILF":"İŞ PORTFÖY LİKİT FONU","IPF":"İŞ PORTFÖY PARA PİYASASI FONU",
+"ISF":"İŞ PORTFÖY SERBEST FONU","ITF":"İŞ PORTFÖY TAHVİL FONU",
+"IYF":"İŞ PORTFÖY YABANCI HİSSE SENEDİ FONU","TMG":"İŞ PORTFÖY YABANCI TEKNOLOJİ HİSSE SENEDİ FONU",
+"IBA":"İŞ PORTFÖY ALTIN FONU",
+"IMF":"İSTANBUL PORTFÖY MAESTRO SERBEST FON","IIE":"İSTANBUL PORTFÖY ONDÖRDÜNCÜ SERBEST FON",
+"IIH":"İSTANBUL PORTFÖY ÜÇÜNCÜ HİSSE SENEDİ FONU","IRO":"İSTANBUL PORTFÖY ROBOTİK TEKNOLOJİLERİ SERBEST FON",
+"IST":"İSTANBUL PORTFÖY KISA VADELİ BORÇLANMA ARAÇLARI FONU","ACU":"İSTANBUL PORTFÖY URARTU SERBEST (DÖVİZ) FON",
+"KAF":"KARE PORTFÖY ALTIN FONU","KHF":"KARE PORTFÖY HİSSE SENEDİ FONU",
+"KKF":"KARE PORTFÖY KATILIM FONU","KLF":"KARE PORTFÖY LİKİT FONU",
+"KPF":"KARE PORTFÖY PARA PİYASASI FONU","KTF":"KARE PORTFÖY TAHVİL FONU",
+"KGA":"KARE PORTFÖY ALTIN (DÖVİZ) FONU",
+"MAF":"MAXİS PORTFÖY ALTIN FONU","MHF":"MAXİS PORTFÖY HİSSE SENEDİ FONU",
+"MLF":"MAXİS PORTFÖY LİKİT FONU","MPF":"MAXİS PORTFÖY PARA PİYASASI FONU",
+"MTF":"MAXİS PORTFÖY TAHVİL FONU","MGA":"MAXİS PORTFÖY ALTIN (DÖVİZ) FONU",
+"NBF":"NUROL PORTFÖY BORÇLANMA ARAÇLARI FONU","NHF":"NUROL PORTFÖY HİSSE SENEDİ FONU",
+"NJG":"NUROL PORTFÖY BİRİNCİ SERBEST FON","NKF":"NUROL PORTFÖY KATILIM FONU",
+"NLE":"NUROL PORTFÖY EMLAK SEKTÖRÜ HİSSE SENEDİ FONU","NPH":"NUROL PORTFÖY BİRİNCİ HİSSE SENEDİ FONU",
+"NSD":"NUROL PORTFÖY DÖRDÜNCÜ SERBEST (DÖVİZ) FON","NUB":"NUROL PORTFÖY BEŞİNCİ SERBEST (DÖVİZ) FON",
+"NGA":"NUROL PORTFÖY ALTIN FONU",
+"OAF":"OYAK PORTFÖY ALTIN FONU","OHF":"OYAK PORTFÖY HİSSE SENEDİ FONU",
+"OKF":"OYAK PORTFÖY KATILIM FONU","OLF":"OYAK PORTFÖY LİKİT FONU",
+"OPF":"OYAK PORTFÖY PARA PİYASASI FONU","OSF":"OYAK PORTFÖY SERBEST FONU",
+"OTF":"OYAK PORTFÖY TAHVİL FONU","OGA":"OYAK PORTFÖY ALTIN (DÖVİZ) FONU",
+"PBF":"PASHA PORTFÖY BORÇLANMA ARAÇLARI FONU","PHF":"PASHA PORTFÖY HİSSE SENEDİ FONU",
+"PKF":"PASHA PORTFÖY KATILIM FONU","PLF":"PASHA PORTFÖY LİKİT FONU",
+"PPF":"PASHA PORTFÖY PARA PİYASASI FONU","PSF":"PASHA PORTFÖY SERBEST FONU",
+"PTF":"PASHA PORTFÖY TAHVİL FONU","PGA":"PASHA PORTFÖY ALTIN (DÖVİZ) FONU",
+"QAF":"QNB PORTFÖY ALTIN FONU","QHF":"QNB PORTFÖY HİSSE SENEDİ FONU",
+"QKF":"QNB PORTFÖY KATILIM FONU","QLF":"QNB PORTFÖY LİKİT FONU",
+"QPF":"QNB PORTFÖY PARA PİYASASI FONU","QTF":"QNB PORTFÖY TAHVİL FONU",
+"QGA":"QNB PORTFÖY ALTIN (DÖVİZ) FONU",
+"TAF":"TEB PORTFÖY ALTIN FONU","TBF":"TEB PORTFÖY BORÇLANMA ARAÇLARI FONU",
+"THF":"TEB PORTFÖY HİSSE SENEDİ FONU","TIE":"TEB PORTFÖY BIST 30 ENDEKSİ HİSSE SENEDİ FONU",
+"TKF":"TEB PORTFÖY KATILIM FONU","TLF":"TEB PORTFÖY LİKİT FONU",
+"TPF":"TEB PORTFÖY PARA PİYASASI FONU","TSF":"TEB PORTFÖY SERBEST FONU",
+"TTF":"TEB PORTFÖY TAHVİL FONU","TYF":"TEB PORTFÖY YABANCI HİSSE SENEDİ FONU",
+"TBK":"TEB PORTFÖY KATILIM ALTIN FONU",
+"TGA":"TERA PORTFÖY ALTIN FONU","TGB":"TERA PORTFÖY BORÇLANMA ARAÇLARI FONU",
+"TGH":"TERA PORTFÖY GİRİŞİM SERMAYESİ HİSSE SENEDİ FONU","TGI":"TERA PORTFÖY BİRİNCİ HİSSE SENEDİ FONU",
+"TGL":"TERA PORTFÖY LİKİT FONU","TI2":"TERA PORTFÖY İKİNCİ HİSSE SENEDİ FONU",
+"UAF":"ÜNLÜ PORTFÖY ALTIN FONU","UHF":"ÜNLÜ PORTFÖY HİSSE SENEDİ FONU",
+"UKF":"ÜNLÜ PORTFÖY KATILIM FONU","ULF":"ÜNLÜ PORTFÖY LİKİT FONU",
+"UTF":"ÜNLÜ PORTFÖY TAHVİL FONU","UYF":"ÜNLÜ PORTFÖY YABANCI HİSSE SENEDİ FONU",
+"UGA":"ÜNLÜ PORTFÖY ALTIN (DÖVİZ) FONU",
+"VAF":"VAKIF PORTFÖY ALTIN FONU","VBF":"VAKIF PORTFÖY BORÇLANMA ARAÇLARI FONU",
+"VHF":"VAKIF PORTFÖY HİSSE SENEDİ FONU","VKF":"VAKIF PORTFÖY KATILIM FONU",
+"VLF":"VAKIF PORTFÖY LİKİT FONU","VPF":"VAKIF PORTFÖY PARA PİYASASI FONU",
+"VTF":"VAKIF PORTFÖY TAHVİL FONU","VYF":"VAKIF PORTFÖY YABANCI HİSSE SENEDİ FONU",
+"VGA":"VAKIF PORTFÖY ALTIN (DÖVİZ) FONU",
+"YAF":"YAPI KREDİ PORTFÖY ALTIN FONU","YAY":"YAPI KREDİ PORTFÖY YABANCI TEKNOLOJİ SEKTÖRÜ HİSSE SENEDİ FONU",
+"YBF":"YAPI KREDİ PORTFÖY BORÇLANMA ARAÇLARI FONU","YHF":"YAPI KREDİ PORTFÖY HİSSE SENEDİ FONU",
+"YIF":"YAPI KREDİ PORTFÖY İKİNCİ HİSSE SENEDİ FONU","YKF":"YAPI KREDİ PORTFÖY KATILIM FONU",
+"YLF":"YAPI KREDİ PORTFÖY LİKİT FONU","YPF":"YAPI KREDİ PORTFÖY PARA PİYASASI FONU",
+"YSF":"YAPI KREDİ PORTFÖY SERBEST FONU","YTF":"YAPI KREDİ PORTFÖY TAHVİL FONU",
+"YYF":"YAPI KREDİ PORTFÖY YABANCI HİSSE SENEDİ FONU","YKA":"YAPI KREDİ PORTFÖY ALTIN (DÖVİZ) FONU",
+"ZAF":"ZİRAAT PORTFÖY ALTIN FONU","ZBF":"ZİRAAT PORTFÖY BORÇLANMA ARAÇLARI FONU",
+"ZHF":"ZİRAAT PORTFÖY HİSSE SENEDİ FONU","ZKF":"ZİRAAT PORTFÖY KATILIM FONU",
+"ZLF":"ZİRAAT PORTFÖY LİKİT FONU","ZPF":"ZİRAAT PORTFÖY PARA PİYASASI FONU",
+"ZSF":"ZİRAAT PORTFÖY SERBEST FONU","ZTF":"ZİRAAT PORTFÖY TAHVİL FONU",
+"ZYF":"ZİRAAT PORTFÖY YABANCI HİSSE SENEDİ FONU","ZGD":"ZİRAAT PORTFÖY ALTIN (DÖVİZ) FONU",
+"ZGK":"ZİRAAT PORTFÖY KATILIM ALTIN FONU",
+"BMF":"BİZİM PORTFÖY METAL YATIRIM FONU","BPP":"BİZİM PORTFÖY PARA PİYASASI FONU",
+"BTK":"BİZİM PORTFÖY TEKNOLOJİ HİSSE SENEDİ FONU","BKF":"BİZİM PORTFÖY KARMA FONU",
+"BKT":"BİZİM PORTFÖY KATILIM FONU","BGI":"BİZİM PORTFÖY GİRİŞİM SERMAYESİ YATIRIM FONU",
+"BGA":"BİZİM PORTFÖY ALTIN FONU",
+"SAF":"STRATEJİ PORTFÖY ALTIN FONU","SHF":"STRATEJİ PORTFÖY HİSSE SENEDİ FONU",
+"SKF":"STRATEJİ PORTFÖY KATILIM FONU","SLF":"STRATEJİ PORTFÖY LİKİT FONU",
+"SSF":"STRATEJİ PORTFÖY SERBEST FONU","STF":"STRATEJİ PORTFÖY TAHVİL FONU",
+"SGA":"STRATEJİ PORTFÖY ALTIN (DÖVİZ) FONU",
+"ADB":"ALARKO PORTFÖY BORÇLANMA ARAÇLARI FONU","AGT":"ALARKO PORTFÖY GİRİŞİM SERMAYESİ YATIRIM FONU",
+"TGF":"TACIRLER PORTFÖY HİSSE SENEDİ FONU","TAC":"TACIRLER PORTFÖY KARMA FONU",
+"TAP":"TACIRLER PORTFÖY PARA PİYASASI FONU","TAT":"TACIRLER PORTFÖY TAHVİL FONU",
+"MGF":"MİGROS PORTFÖY HİSSE SENEDİ FONU","MGP":"MİGROS PORTFÖY PARA PİYASASI FONU",
+};
+
+/* ── FİYATLAR ── */
+const prices={USD:0,EUR:0,XAU:0};
+const fmt=v=>v>0?v.toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2}):'—';
+const fmt4=v=>v>0?v.toLocaleString('tr-TR',{minimumFractionDigits:4,maximumFractionDigits:4}):'—';
+
+function showPrice(code,val){
+  prices[code]=val;
+  const cell=document.getElementById('prc-'+code+'-cell');
+  if(cell) cell.innerHTML=`<span class="pval">${fmt(val)} ₺</span>`;
+  recalc();
+}
+
+async function fetchAll(){
+  const btn=document.getElementById('btnRef');
+  const ico=document.getElementById('refIco');
+  const up=document.getElementById('lastUp');
+  const err=document.getElementById('errMsg');
+  btn.disabled=true;
+  ico.className='spinning';
+  up.textContent='güncelleniyor…';
+  err.textContent='';
+
+  let ok=0;
+  // 1) USD/TRY + EUR/TRY — frankfurter.dev (CORS açık, key yok)
+  try{
+    const r=await fetch('https://api.frankfurter.dev/v1/latest?base=TRY&symbols=USD,EUR');
+    const d=await r.json();
+    if(d.rates){
+      showPrice('USD', parseFloat((1/d.rates.USD).toFixed(4)));
+      showPrice('EUR', parseFloat((1/d.rates.EUR).toFixed(4)));
+      ok++;
+    }
+  }catch(e){ err.textContent='Döviz alınamadı'; }
+
+  // 2) Gram Altın — truncgil (serbest piyasa has altın)
+  const goldUrl='https://finans.truncgil.com/v4/today.json';
+  const proxies=[
+    goldUrl,
+    'https://api.allorigins.win/raw?url='+encodeURIComponent(goldUrl),
+    'https://api.allorigins.win/get?url='+encodeURIComponent(goldUrl),
+    'https://corsproxy.io/?url='+encodeURIComponent(goldUrl),
+  ];
+  for(const url of proxies){
+    try{
+      const r=await fetch(url,{cache:'no-store'});
+      if(!r.ok) continue;
+      let d=await r.json();
+      if(d.contents) d=JSON.parse(d.contents);
+      const g=d?.HAS?.Selling||d?.GRA?.Selling||d?.['HAS']?.Selling;
+      if(g){ showPrice('XAU',parseFloat(parseFloat(g).toFixed(2))); ok++; break; }
+    }catch(e){}
+  }
+
+  up.textContent=ok>0?'Son güncelleme: '+new Date().toLocaleTimeString('tr-TR'):'';
+  if(ok===0) err.textContent='Fiyatlar alınamadı';
+  btn.disabled=false;
+  ico.className='';
+}
+
+/* ── HESAP ── */
+function recalc(){
+  let aSum=0;
+  ['USD','EUR','XAU'].forEach(c=>{
+    const amt=parseFloat(document.getElementById('amt-'+c)?.value)||0;
+    const prc=prices[c]||0;
+    const t=amt&&prc?amt*prc:0;
+    document.getElementById('tot-'+c).innerHTML=
+      t>0?`<span class="tval">${fmt(t)} ₺</span>`:'<span class="temp">—</span>';
+    aSum+=t;
+  });
+  document.getElementById('aSub').textContent=aSum>0?fmt(aSum)+' ₺':'—';
+
+  let fSum=0;
+  fundRows.forEach(id=>{
+    const p=parseFloat(document.getElementById('fp'+id)?.value)||0;
+    const a=parseFloat(document.getElementById('fa'+id)?.value)||0;
+    const t=p&&a?p*a:0;
+    const el=document.getElementById('ft'+id);
+    if(el) el.innerHTML=t>0?`<span class="tval">${fmt(t)} ₺</span>`:'<span class="temp">—</span>';
+    fSum+=t;
+  });
+  document.getElementById('fSub').textContent=fSum>0?fmt(fSum)+' ₺':'—';
+  document.getElementById('grand').textContent=(aSum+fSum)>0?fmt(aSum+fSum)+' ₺':'— ₺';
+}
+
+/* ── TEFAS FON FİYATI ── */
+async function fetchFundPrice(id){
+  const code=document.getElementById('fc'+id)?.value.trim().toUpperCase();
+  const fp=document.getElementById('fp'+id);
+  if(!code||code.length<2||!fp) return;
+  fp.placeholder='…';
+  const today=new Date();
+  // hafta sonu ise son Cuma
+  const d=new Date(today);
+  if(d.getDay()===0) d.setDate(d.getDate()-2);
+  if(d.getDay()===6) d.setDate(d.getDate()-1);
+  const dt=d.getDate().toString().padStart(2,'0')+'.'+(d.getMonth()+1).toString().padStart(2,'0')+'.'+d.getFullYear();
+  const body=`fontip=YAT&sfonkod=${code}&bastarih=${dt}&bittarih=${dt}&fonkod=${code}`;
+  const tefas='https://www.tefas.gov.tr/api/DB/BindHistoryInfo';
+  const tryUrls=[
+    'https://corsproxy.io/?url='+encodeURIComponent(tefas),
+    'https://api.allorigins.win/raw?url='+encodeURIComponent(tefas),
+  ];
+  for(const url of tryUrls){
+    try{
+      const r=await fetch(url,{method:'POST',
+        headers:{'Content-Type':'application/x-www-form-urlencoded'},body});
+      if(!r.ok) continue;
+      const d2=await r.json();
+      const rows=d2?.data||d2?.Data||[];
+      if(rows.length>0){
+        const p=rows[0].FIYAT||rows[0].Fiyat||rows[0].fiyat;
+        if(p){
+          fp.value=parseFloat(p).toFixed(4);
+          fp.style.color='#16a34a';
+          fp.style.fontWeight='600';
+          recalc(); return;
+        }
+      }
+    }catch(e){}
+  }
+  fp.placeholder='Fiyat girin';
+}
+
+/* ── FON SATIRLARI ── */
+const fundRows=[];
+let ctr=1;
+const debounce={};
+
+function onCodeInput(id){
+  const el=document.getElementById('fc'+id);
+  el.value=el.value.replace(/[^a-zA-ZğüşıöçĞÜŞİÖÇ0-9]/g,'').toUpperCase().slice(0,6);
+  clearTimeout(debounce[id]);
+  debounce[id]=setTimeout(()=>{
+    lookupName(id);
+    if(el.value.length>=3) fetchFundPrice(id);
+  },500);
+}
+
+function lookupName(id){
+  const code=document.getElementById('fc'+id)?.value.toUpperCase();
+  const ni=document.getElementById('fn'+id);
+  const ico=document.getElementById('fni'+id);
+  if(!ni||!ico) return;
+  if(F[code]){ ni.value=F[code]; ico.className='fn-ico ok'; ico.textContent='✓'; }
+  else { ico.className='fn-ico no'; ico.textContent=code.length>=2?'?':''; }
+}
+
+function addFund(){
+  const id=ctr++; fundRows.push(id);
+  const tr=document.createElement('tr'); tr.id='fr'+id;
+  tr.innerHTML=`
+    <td><input type="text" class="in-code" id="fc${id}" placeholder="KOD"
+      maxlength="6" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false"
+      oninput="onCodeInput(${id})"
+      style="width:68px;font-size:.9rem;padding:.42rem .3rem;text-align:center"/></td>
+    <td><div class="fn-wrap">
+      <input type="text" id="fn${id}" placeholder="kod gir → ad otomatik gelir"
+        autocomplete="off" spellcheck="false" style="width:100%;font-size:.8rem"/>
+      <span class="fn-ico" id="fni${id}"></span>
+    </div></td>
+    <td class="c"><input type="number" class="in-num" id="fp${id}"
+      placeholder="—" step="0.0001" min="0" oninput="recalc()"
+      style="width:90px;font-size:.82rem"/></td>
+    <td class="c"><input type="number" class="in-num" id="fa${id}"
+      placeholder="0" step="any" min="0" oninput="recalc()"
+      style="width:80px;font-size:.82rem"/></td>
+    <td class="r" id="ft${id}"><span class="temp">—</span></td>
+    <td class="c"><button class="btn-del" onclick="delFund(${id})" title="Sil">✕</button></td>`;
+  document.getElementById('fBody').appendChild(tr);
+  updDel();
+}
+
+function delFund(id){
+  document.getElementById('fr'+id)?.remove();
+  const i=fundRows.indexOf(id);
+  if(i>-1) fundRows.splice(i,1);
+  updDel(); recalc();
+}
+
+function updDel(){
+  document.querySelectorAll('.btn-del').forEach(b=>b.disabled=fundRows.length<=1);
+}
+
+addFund();
+fetchAll();
+</script>
+
+</body>
+</html>
